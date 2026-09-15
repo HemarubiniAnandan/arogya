@@ -144,40 +144,40 @@ export default function App() {
       )}
 
       {/* Official Services Toolbar Bar */}
-      <div className="bg-white border-b border-slate-300 py-2 px-4 shadow-xs">
+      <div className="bg-[#1E293B] border-b border-slate-700/80 py-2.5 px-4 shadow-2xs">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-[#0A2540] uppercase tracking-wider text-[11px] flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+            <span className="font-bold text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
               Integrated Portals:
             </span>
             <button
               onClick={() => setSpecialModule(specialModule === 'medicine' ? 'none' : 'medicine')}
-              className={`px-3 py-1 rounded font-bold text-xs flex items-center gap-1.5 transition border ${
+              className={`px-3 py-1 rounded-lg font-bold text-xs flex items-center gap-1.5 transition border cursor-pointer ${
                 specialModule === 'medicine'
-                  ? 'bg-[#0A2540] text-white border-[#0A2540] shadow-xs'
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
+                  ? 'bg-[#0F172A] text-white border-slate-600 shadow-xs'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
               }`}
             >
-              <Pill className="w-3.5 h-3.5 text-amber-600" />
+              <Pill className="w-3.5 h-3.5 text-slate-400" />
               e-Aushadhi Drug Inventory
             </button>
 
             <button
               onClick={() => setSpecialModule(specialModule === 'diagnostics' ? 'none' : 'diagnostics')}
-              className={`px-3 py-1 rounded font-bold text-xs flex items-center gap-1.5 transition border ${
+              className={`px-3 py-1 rounded-lg font-bold text-xs flex items-center gap-1.5 transition border cursor-pointer ${
                 specialModule === 'diagnostics'
-                  ? 'bg-[#0A2540] text-white border-[#0A2540] shadow-xs'
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
+                  ? 'bg-[#0F172A] text-white border-slate-600 shadow-xs'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
               }`}
             >
-              <Microscope className="w-3.5 h-3.5 text-amber-600" />
+              <Microscope className="w-3.5 h-3.5 text-slate-400" />
               NABL Diagnostic Coordination
             </button>
           </div>
 
-          <div className="hidden sm:flex items-center gap-3 text-slate-600 text-[11px] font-medium">
-            <span className="font-semibold text-[#0A2540]">Government Health Directorate Services</span>
+          <div className="hidden sm:flex items-center gap-3 text-slate-400 text-[11px] font-medium">
+            <span className="font-semibold text-slate-300">Government Health Directorate Services</span>
           </div>
         </div>
       </div>
@@ -186,10 +186,10 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-4">
         {specialModule === 'medicine' ? (
           <div className="space-y-4">
-            <div className="flex justify-between items-center bg-white p-3 rounded border border-slate-300">
+            <div className="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
               <button
                 onClick={() => setSpecialModule('none')}
-                className="text-xs text-[#0A2540] font-bold hover:underline flex items-center gap-1"
+                className="text-xs text-slate-800 font-bold hover:underline flex items-center gap-1 cursor-pointer"
               >
                 ← Return to {currentRole.toUpperCase()} Workspace
               </button>
@@ -199,10 +199,10 @@ export default function App() {
           </div>
         ) : specialModule === 'diagnostics' ? (
           <div className="space-y-4">
-            <div className="flex justify-between items-center bg-white p-3 rounded border border-slate-300">
+            <div className="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
               <button
                 onClick={() => setSpecialModule('none')}
-                className="text-xs text-[#0A2540] font-bold hover:underline flex items-center gap-1"
+                className="text-xs text-slate-800 font-bold hover:underline flex items-center gap-1 cursor-pointer"
               >
                 ← Return to {currentRole.toUpperCase()} Workspace
               </button>
@@ -249,11 +249,11 @@ export default function App() {
       </main>
 
       {/* Official Government Footer */}
-      <footer className="bg-[#07172F] text-slate-300 text-xs py-8 border-t-4 border-[#D97706] mt-auto">
+      <footer className="bg-[#0F172A] text-slate-400 text-xs py-8 border-t border-slate-800 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-slate-800">
             <div className="flex items-center gap-3.5">
-              <AarogyaRakshakLogo className="w-12 h-12 shrink-0" />
+              <AarogyaRakshakLogo className="w-11 h-11 shrink-0 border border-slate-700" />
               <MohfwLogo className="h-8 shrink-0 hidden sm:block" />
               <div>
                 <h2 className="text-base font-bold text-white">
@@ -262,28 +262,28 @@ export default function App() {
                 <p className="text-xs text-slate-400">
                   {language === 'mr' ? 'आरोग्यरक्षक - ग्रामीण आरोग्य निरंतरता प्रणाली' : language === 'hi' ? 'आरोग्यरक्षक - ग्रामीण स्वास्थ्य निरंतरता मंच' : 'AarogyaRakshak - Rural Health Continuity Platform'}
                 </p>
-                <p className="text-[11px] text-amber-400 font-semibold mt-0.5">
+                <p className="text-[11px] text-slate-300 font-semibold mt-0.5">
                   Healthy Villages, Stronger Maharashtra
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-300">
+            <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-400">
               <span className="flex items-center gap-1 hover:text-white cursor-pointer">
-                <Info className="w-3.5 h-3.5 text-amber-400" /> Terms of Service
+                <Info className="w-3.5 h-3.5 text-slate-400" /> Terms of Service
               </span>
               <span>•</span>
               <span className="flex items-center gap-1 hover:text-white cursor-pointer">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Privacy Policy (ABDM Data Privacy)
+                <ShieldCheck className="w-3.5 h-3.5 text-slate-400" /> Privacy Policy (ABDM Data Privacy)
               </span>
               <span>•</span>
               <span className="flex items-center gap-1 hover:text-white cursor-pointer">
-                <PhoneCall className="w-3.5 h-3.5 text-blue-400" /> Toll Free: 104 / 1800-233-0244
+                <PhoneCall className="w-3.5 h-3.5 text-slate-400" /> Toll Free: 104 / 1800-233-0244
               </span>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row justify-between items-center text-[11px] text-slate-400 gap-2">
+          <div className="flex flex-col sm:flex-row justify-between items-center text-[11px] text-slate-500 gap-2">
             <div>
               Designed & Developed for Public Health Services in Maharashtra. Mapped to National Health Authority standards.
             </div>

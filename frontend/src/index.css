@@ -2,18 +2,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --govt-navy-900: #07172F;
-  --govt-navy-800: #0A2540;
-  --govt-navy-700: #0F3460;
-  --govt-blue-600: #1D4ED8;
-  --govt-blue-500: #2563EB;
-  --govt-gold-600: #B45309;
-  --govt-gold-500: #D97706;
-  --govt-gold-400: #F59E0B;
-  --govt-saffron: #FF9933;
-  --govt-green-700: #047857;
-  --govt-green-600: #059669;
-  --govt-bg-light: #F1F5F9;
+  --govt-slate-950: #020617;
+  --govt-slate-900: #0F172A;
+  --govt-slate-800: #1E293B;
+  --govt-slate-700: #334155;
+  --govt-slate-600: #475569;
+  --govt-slate-100: #F1F5F9;
+  --govt-bg-light: #F8FAFC;
   --font-devanagari: 'Noto Sans Devanagari', 'Inter', sans-serif;
 }
 
@@ -30,35 +25,35 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #E2E8F0;
+  background: #F1F5F9;
 }
 ::-webkit-scrollbar-thumb {
-  background: #94A3B8;
+  background: #CBD5E1;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #64748B;
+  background: #94A3B8;
 }
 
-/* Official Government Card Styling */
+/* Official Government Card Styling - Executive Premium Muted */
 .govt-card {
   background-color: #FFFFFF;
-  border: 1px solid #CBD5E1;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05);
+  border: 1px solid #E2E8F0;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.03);
   transition: all 0.2s ease-in-out;
 }
 
 .govt-card-header {
-  background: linear-gradient(180deg, #F8FAFC 0%, #EDF2F7 100%);
+  background: #F8FAFC;
   border-bottom: 1px solid #E2E8F0;
   padding: 0.75rem 1rem;
 }
 
-/* Official Tricolor Accent Strip */
+/* Official Subtle Accent Line */
 .govt-tricolor-strip {
-  height: 4px;
-  background: linear-gradient(90deg, #FF9933 0%, #FF9933 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #138808 66.66%, #138808 100%);
+  height: 3px;
+  background: linear-gradient(90deg, #334155 0%, #475569 50%, #64748B 100%);
 }
 
 /* Custom Table Styles */

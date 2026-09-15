@@ -617,32 +617,32 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
       {activeTab === 'dashboard' && (
         <div className="space-y-6">
           {/* RISK-BASED SMART HEALTH & VACCINATION REMINDERS PANEL */}
-          <div className="bg-gradient-to-r from-blue-900 to-[#0F3460] text-white p-5 rounded-2xl shadow-md border border-amber-500/30 space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-700/50 pb-2.5">
+          <div className="bg-[#0F172A] text-white p-5 rounded-2xl shadow-sm border border-slate-800 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
               <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-amber-400 animate-pulse" />
+                <Clock className="w-4 h-4 text-slate-400" />
                 <h3 className="font-bold text-white text-sm uppercase tracking-wide">
                   Smart Health & Vaccination Reminders ({currentPatient?.highRiskCategory || 'General Care'})
                 </h3>
               </div>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-400 text-slate-950">
-                {currentPatient?.isHighRisk ? 'High Priority Attention Required' : 'Active Routine Care'}
+              <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-800 text-slate-200 border border-slate-700">
+                {currentPatient?.isHighRisk ? 'High Priority Care' : 'Active Routine Care'}
               </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
               {/* Chronic Disease Alert */}
               {currentPatient?.chronicConditions && currentPatient.chronicConditions.length > 0 && (
-                <div className="bg-blue-950/90 border border-blue-400/40 p-3.5 rounded-xl space-y-1">
-                  <div className="font-bold text-amber-300 flex items-center gap-1.5">
-                    <Activity className="w-4 h-4 text-amber-400" /> Chronic Disease Follow-up Alert
+                <div className="bg-slate-800/90 border border-slate-700 p-3.5 rounded-xl space-y-1">
+                  <div className="font-bold text-slate-100 flex items-center gap-1.5">
+                    <Activity className="w-4 h-4 text-slate-400" /> Chronic Disease Follow-up Alert
                   </div>
-                  <p className="text-slate-200">
+                  <p className="text-slate-300">
                     Monthly BP & Glucose review due for: <strong>{currentPatient.chronicConditions.join(', ')}</strong>. Refill current medications.
                   </p>
                   <button
                     onClick={() => { setActiveTab('book'); setBookingStep(1); }}
-                    className="mt-1 text-[11px] font-bold text-amber-400 hover:underline flex items-center gap-1"
+                    className="mt-1 text-[11px] font-bold text-slate-300 hover:text-white underline flex items-center gap-1 cursor-pointer"
                   >
                     Schedule Routine OPD Review →
                   </button>
@@ -651,16 +651,16 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
 
               {/* Maternal / ANC Alert */}
               {currentPatient?.highRiskCategory === 'Maternal' && (
-                <div className="bg-pink-950/90 border border-pink-400/40 p-3.5 rounded-xl space-y-1">
-                  <div className="font-bold text-pink-300 flex items-center gap-1.5">
-                    <Heart className="w-4 h-4 text-pink-400" /> Pradhan Mantri Surakshit Matritva (ANC)
+                <div className="bg-slate-800/90 border border-slate-700 p-3.5 rounded-xl space-y-1">
+                  <div className="font-bold text-slate-100 flex items-center gap-1.5">
+                    <Heart className="w-4 h-4 text-slate-400" /> Pradhan Mantri Surakshit Matritva (ANC)
                   </div>
-                  <p className="text-slate-200">
+                  <p className="text-slate-300">
                     ANC Trimester Check-up & Tetanus Toxoid (TT) Immunization due. Session site: PHC Morgaon.
                   </p>
                   <button
                     onClick={() => setActiveTab('vaccination')}
-                    className="mt-1 text-[11px] font-bold text-pink-300 hover:underline flex items-center gap-1"
+                    className="mt-1 text-[11px] font-bold text-slate-300 hover:text-white underline flex items-center gap-1 cursor-pointer"
                   >
                     Book ANC Vaccination Slot →
                   </button>
@@ -669,16 +669,16 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
 
               {/* Pediatric / Child Alert */}
               {currentPatient && currentPatient.age <= 12 && (
-                <div className="bg-emerald-950/90 border border-emerald-400/40 p-3.5 rounded-xl space-y-1">
-                  <div className="font-bold text-emerald-300 flex items-center gap-1.5">
-                    <Baby className="w-4 h-4 text-emerald-400" /> U-WIN Pediatric Immunization Schedule
+                <div className="bg-slate-800/90 border border-slate-700 p-3.5 rounded-xl space-y-1">
+                  <div className="font-bold text-slate-100 flex items-center gap-1.5">
+                    <Baby className="w-4 h-4 text-slate-400" /> U-WIN Pediatric Immunization Schedule
                   </div>
-                  <p className="text-slate-200">
+                  <p className="text-slate-300">
                     Due: MR (Measles & Rubella) Dose 2 & Oral Polio Booster. Location: Morgaon Sub-Centre.
                   </p>
                   <button
                     onClick={() => setActiveTab('vaccination')}
-                    className="mt-1 text-[11px] font-bold text-emerald-300 hover:underline flex items-center gap-1"
+                    className="mt-1 text-[11px] font-bold text-slate-300 hover:text-white underline flex items-center gap-1 cursor-pointer"
                   >
                     Book U-WIN Child Slot →
                   </button>
@@ -687,16 +687,16 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
 
               {/* Adult / Elderly Preventive Care */}
               {currentPatient && currentPatient.age > 40 && (
-                <div className="bg-amber-950/80 border border-amber-400/40 p-3.5 rounded-xl space-y-1">
-                  <div className="font-bold text-amber-300 flex items-center gap-1.5">
-                    <Calendar className="w-4 h-4 text-amber-400" /> Adult Health & Immunization Check
+                <div className="bg-slate-800/90 border border-slate-700 p-3.5 rounded-xl space-y-1">
+                  <div className="font-bold text-slate-100 flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4 text-slate-400" /> Adult Health & Immunization Check
                   </div>
-                  <p className="text-slate-200">
+                  <p className="text-slate-300">
                     Annual Lipid, Diabetes, and Adult Pneumococcal Screening recommended for citizens over 40.
                   </p>
                   <button
                     onClick={() => { setActiveTab('book'); setBookingStep(1); }}
-                    className="mt-1 text-[11px] font-bold text-amber-300 hover:underline flex items-center gap-1"
+                    className="mt-1 text-[11px] font-bold text-slate-300 hover:text-white underline flex items-center gap-1 cursor-pointer"
                   >
                     Book Health Screening →
                   </button>
