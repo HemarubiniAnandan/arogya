@@ -109,11 +109,13 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({ language, onOpenSmsD
   // Doctor surname / match key
   const docLastName = doctorName.split(' ').slice(-1)[0] || doctorName;
 
-  // Queue of active patients assigned to this doctor
-  const myQueue = appointments.filter(a =>
-    ['ARRIVED', 'IN_CONSULTATION', 'CONFIRMED', 'REQUESTED'].includes(a.status) &&
-    (a.doctorId === doctorId || a.doctorName?.toLowerCase().includes(docLastName.toLowerCase()))
-  );
+  // Queue of active patients assigned to this doctor (Emergency Patients Pinned to Top)
+  const myQueue = appointments
+    .filter(a =>
+      ['ARRIVED', 'IN_CONSULTATION', 'CONFIRMED', 'REQUESTED'].includes(a.status) &&
+      (a.doctorId === doctorId || a.doctorName?.toLowerCase().includes(docLastName.toLowerCase()))
+    )
+    .sort((a, b) => (b.isEmergencyAlert ? 1 : 0) - (a.isEmergencyAlert ? 1 : 0));
 
   // Completed Consultations by this doctor
   const myCompletedConsultations = appointments.filter(a =>
@@ -181,7 +183,7 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({ language, onOpenSmsD
     );
   };
 
-  // Complete Consultation
+  // Complete Consultation & Archive Patient Record
   const handleCompleteConsultation = (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeApt) return;
@@ -200,9 +202,28 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({ language, onOpenSmsD
       confidentialDoctorNotes: confidentialNotes || undefined
     };
 
+    // 1. Mark consultation as COMPLETED with prescription
     storageService.completeConsultation(activeApt.id, newRx, doctorName);
+
+    // 2. Move completed patient profile to Archive
+    storageService.archiveConsultation(activeApt.id, doctorName);
+
+    // 3. Auto-advance queue to next waiting patient
+    const remainingQueue = myQueue.filter(a => a.id !== activeApt.id);
+    const nextPatient = remainingQueue.length > 0 ? remainingQueue[0] : null;
+
+    if (nextPatient) {
+      setSelectedAptId(nextPatient.id);
+    } else {
+      setSelectedAptId('');
+    }
+
     setViewingRx(newRx);
-    setFeedbackMsg(`Consultation for ${activeApt.patientName} COMPLETED. Digital prescription generated & automated SMS dispatched to patient!`);
+    setFeedbackMsg(
+      `Consultation for ${activeApt.patientName} COMPLETED & ARCHIVED. Digital Rx issued and SMS sent. ${
+        nextPatient ? `OPD Queue auto-advanced to ${nextPatient.patientName} (Token ${nextPatient.tokenNumber}).` : 'OPD queue is now empty!'
+      }`
+    );
     setTimeout(() => setFeedbackMsg(null), 8000);
   };
 
@@ -315,22 +336,53 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({ language, onOpenSmsD
           </div>
 
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            {/* Doctor Switcher Dropdown */}
-            <div className="bg-blue-950/80 p-2 rounded-xl border border-amber-500/40">
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-amber-300 mb-1">
-                Active Doctor Login (Switch Doctor)
-              </label>
-              <select
-                value={selectedDoctorId}
-                onChange={e => setSelectedDoctorId(e.target.value)}
-                className="bg-[#07172F] text-xs font-semibold text-white px-2.5 py-1 rounded border border-blue-600 focus:outline-none cursor-pointer"
-              >
-                {doctorsList.map(doc => (
-                  <option key={doc.id} value={doc.id}>
-                    {doc.name} — {doc.specialty} ({doc.hospitalName.split('(')[0].trim()})
-                  </option>
-                ))}
-              </select>
+            {/* Doctor Switcher Dropdown & Active Status Toggle */}
+            <div className="flex items-center gap-2 bg-blue-950/80 p-2 rounded-xl border border-amber-500/40">
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-amber-300 mb-0.5">
+                  Active Doctor Login
+                </label>
+                <select
+                  value={selectedDoctorId}
+                  onChange={e => setSelectedDoctorId(e.target.value)}
+                  className="bg-[#07172F] text-xs font-semibold text-white px-2 py-1 rounded border border-blue-600 focus:outline-none cursor-pointer"
+                >
+                  {doctorsList.map(doc => (
+                    <option key={doc.id} value={doc.id}>
+                      {doc.name} ({doc.status})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="border-l border-amber-500/30 pl-2">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-emerald-300 mb-0.5">
+                  Duty Status
+                </label>
+                <select
+                  value={currentDoctor?.status || 'Available'}
+                  onChange={e => {
+                    const status = e.target.value as any;
+                    storageService.updateDoctorStatus(doctorId, status);
+                    setFeedbackMsg(`Doctor duty status updated to '${status}'. Hospital staff notified.`);
+                    setTimeout(() => setFeedbackMsg(null), 5000);
+                  }}
+                  className={`text-xs font-bold px-2 py-1 rounded border focus:outline-none cursor-pointer ${
+                    currentDoctor?.status === 'Available'
+                      ? 'bg-emerald-900 text-emerald-200 border-emerald-500'
+                      : currentDoctor?.status === 'Busy'
+                      ? 'bg-rose-900 text-rose-200 border-rose-500'
+                      : currentDoctor?.status === 'Emergency Duty'
+                      ? 'bg-amber-900 text-amber-200 border-amber-500'
+                      : 'bg-slate-800 text-slate-300 border-slate-600'
+                  }`}
+                >
+                  <option value="Available">🟢 Available</option>
+                  <option value="Busy">🔴 Busy (Notify Staff)</option>
+                  <option value="Emergency Duty">⚡ Emergency Duty</option>
+                  <option value="On Leave">🟡 On Leave</option>
+                </select>
+              </div>
             </div>
 
             {onOpenSmsDrawer && (

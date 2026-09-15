@@ -12,9 +12,12 @@ import {
   VoiceMessage,
   UserRole,
   AppointmentStatus,
-  Prescription
+  Prescription,
+  DoctorSlotRoster,
+  SlotFreezeRecord
 } from '../types';
 import { twilioService, voiceService } from './mockAdapters';
+import { apiService } from './apiService';
 
 const STORAGE_KEY_PREFIX = 'maha_aarogya_v1_';
 
@@ -654,6 +657,8 @@ class StorageService {
   private appointments: Appointment[] = [];
   private hospitals: HospitalFacility[] = [];
   private doctors: Doctor[] = [];
+  private doctorRosters: DoctorSlotRoster[] = [];
+  private slotFreezeRecords: SlotFreezeRecord[] = [];
   private vaccinations: VaccinationBooking[] = [];
   private referrals: Referral[] = [];
   private highRiskAlerts: HighRiskAlert[] = [];
@@ -667,6 +672,34 @@ class StorageService {
 
   constructor() {
     this.loadState();
+    this.fetchFromBackend();
+  }
+
+  public async fetchFromBackend() {
+    try {
+      const health = await apiService.getHealth();
+      if (!health) return;
+
+      const [patients, appointments, referrals, hospitals, doctors, smsLogs] = await Promise.all([
+        apiService.getPatients(),
+        apiService.getAppointments(),
+        apiService.getReferrals(),
+        apiService.getHospitals(),
+        apiService.getDoctors(),
+        apiService.getSmsLogs()
+      ]);
+
+      if (patients && patients.length > 0) this.patients = patients;
+      if (appointments && appointments.length > 0) this.appointments = appointments;
+      if (referrals && referrals.length > 0) this.referrals = referrals;
+      if (hospitals && hospitals.length > 0) this.hospitals = hospitals;
+      if (doctors && doctors.length > 0) this.doctors = doctors;
+      if (smsLogs && smsLogs.length > 0) this.smsLogs = smsLogs;
+
+      this.persist();
+    } catch (e) {
+      console.warn('Backend API connection pending or unavailable, using local SQLite cache.');
+    }
   }
 
   private loadState() {
@@ -700,6 +733,12 @@ class StorageService {
 
       const storedAudit = localStorage.getItem(STORAGE_KEY_PREFIX + 'audit');
       this.auditLogs = storedAudit ? JSON.parse(storedAudit) : INITIAL_AUDIT_LOGS;
+
+      const storedRosters = localStorage.getItem(STORAGE_KEY_PREFIX + 'rosters');
+      this.doctorRosters = storedRosters ? JSON.parse(storedRosters) : [];
+
+      const storedFreezes = localStorage.getItem(STORAGE_KEY_PREFIX + 'freezes');
+      this.slotFreezeRecords = storedFreezes ? JSON.parse(storedFreezes) : [];
     } catch (e) {
       console.warn('LocalStorage access restricted, falling back to in-memory state', e);
       this.patients = INITIAL_PATIENTS;
@@ -712,6 +751,8 @@ class StorageService {
       this.maternalRecords = INITIAL_MATERNAL;
       this.smsLogs = INITIAL_SMS_LOGS;
       this.auditLogs = INITIAL_AUDIT_LOGS;
+      this.doctorRosters = [];
+      this.slotFreezeRecords = [];
     }
   }
 
@@ -727,6 +768,8 @@ class StorageService {
       localStorage.setItem(STORAGE_KEY_PREFIX + 'maternal', JSON.stringify(this.maternalRecords));
       localStorage.setItem(STORAGE_KEY_PREFIX + 'sms', JSON.stringify(this.smsLogs));
       localStorage.setItem(STORAGE_KEY_PREFIX + 'audit', JSON.stringify(this.auditLogs));
+      localStorage.setItem(STORAGE_KEY_PREFIX + 'rosters', JSON.stringify(this.doctorRosters));
+      localStorage.setItem(STORAGE_KEY_PREFIX + 'freezes', JSON.stringify(this.slotFreezeRecords));
     } catch (e) {
       // Ignored
     }
@@ -819,6 +862,112 @@ class StorageService {
     this.voiceLogs.unshift(voiceMsg);
     voiceService.triggerVoiceCall(recipientPhone, text, language);
     this.persist();
+  }
+
+  // --- Doctor Duty Status & Staff Alert Workflow ---
+  public updateDoctorStatus(doctorId: string, status: 'Available' | 'Busy' | 'Emergency Duty' | 'On Leave') {
+    const docIndex = this.doctors.findIndex(d => d.id === doctorId);
+    if (docIndex !== -1) {
+      this.doctors[docIndex].status = status;
+      const docName = this.doctors[docIndex].name;
+      
+      // Dispatch audit log for Hospital Staff
+      this.addAuditLog(
+        docName,
+        'doctor',
+        'STATUS_UPDATE',
+        `Doctor Duty: ${status}`,
+        `Dr. ${docName} marked status as '${status}'. Staff notified for OPD queue re-assignment.`
+      );
+
+      // If marked Busy or On Leave, dispatch automated SMS alert to staff desk
+      if (status === 'Busy' || status === 'On Leave') {
+        this.dispatchSMS(
+          '+91 2112 255100',
+          'PHC Morgaon Staff Desk',
+          'staff',
+          `ALERT: Dr. ${docName} is currently ${status.toUpperCase()}. Please check OPD queue and update patient wait expectations.`,
+          'Emergency'
+        );
+      }
+      this.persist();
+    }
+  }
+
+  // --- Hospital Emergency Admission Toggle ---
+  public updateHospitalEmergencyStatus(hospitalId: string, status: 'Accepting' | 'Temporarily Unavailable') {
+    const hospIndex = this.hospitals.findIndex(h => h.id === hospitalId);
+    if (hospIndex !== -1) {
+      this.hospitals[hospIndex].emergencyStatus = status;
+      this.addAuditLog(
+        this.hospitals[hospIndex].name,
+        'staff',
+        'EMERGENCY_STATUS_CHANGE',
+        `Emergency Admissions: ${status}`,
+        `Hospital emergency admission status toggled to '${status}'.`
+      );
+      this.persist();
+    }
+  }
+
+  // --- Emergency SOS Dispatcher with GPS & Guardian Voice Call ---
+  public triggerEmergencySOS(patientId: string, patientName: string, phone: string, locationStr: string, guardianName?: string, guardianPhone?: string) {
+    const alertId = `SOS-${Date.now().toString().slice(-4)}`;
+    
+    // 1. Log High Risk Emergency Alert
+    const sosAlert: HighRiskAlert = {
+      id: alertId,
+      patientId,
+      patientName,
+      patientPhone: phone,
+      village: locationStr || 'Morgaon',
+      category: 'FollowUpDue',
+      condition: `CRITICAL SOS ALERT: Emergency dispatch initiated from ${locationStr}`,
+      priority: 'HIGH',
+      dueDate: new Date().toISOString().split('T')[0],
+      assignedAshaId: 'ASHA-MH-PN-042',
+      notes: `GPS Location: ${locationStr}. Emergency Ambulance 108 notified. Guardian voice call dispatched.`,
+      status: 'PENDING'
+    };
+    this.highRiskAlerts.unshift(sosAlert);
+
+    // 2. Dispatch SMS to 108 Emergency Service
+    this.dispatchSMS(
+      '108',
+      '108 Emergency Ambulance Dispatch',
+      'staff',
+      `CRITICAL SOS: Patient ${patientName} (${phone}) requested emergency ambulance at location: ${locationStr}. Dispatch nearest unit immediately.`,
+      'Emergency'
+    );
+
+    // 3. Dispatch Voice Call & SMS to Guardian
+    const contactPhone = guardianPhone || phone;
+    const contactName = guardianName || patientName;
+    this.dispatchVoiceCall(
+      contactPhone,
+      contactName,
+      `Emergency Alert for ${patientName}. SOS location recorded at ${locationStr}. 108 Ambulance service has been dispatched.`,
+      'mr'
+    );
+
+    this.dispatchSMS(
+      contactPhone,
+      contactName,
+      'patient',
+      `EMERGENCY ALERT: SOS triggered for ${patientName} at location ${locationStr}. 108 Ambulance and nearest PHC Morgaon doctor notified.`,
+      'Emergency'
+    );
+
+    this.addAuditLog(
+      patientName,
+      'patient',
+      'TRIGGER_SOS',
+      alertId,
+      `SOS Emergency triggered by ${patientName} at ${locationStr}. 108 Ambulance & Guardian notified.`
+    );
+
+    this.persist();
+    return alertId;
   }
 
   public getSMSLogs(): SMSMessage[] {
@@ -1231,15 +1380,6 @@ class StorageService {
     return this.doctors;
   }
 
-  public updateDoctorStatus(doctorId: string, status: 'Available' | 'On Leave' | 'Emergency Duty') {
-    const doc = this.doctors.find(d => d.id === doctorId);
-    if (doc) {
-      doc.status = status;
-      this.addAuditLog(doc.name, 'doctor', 'UPDATE_DOCTOR_AVAILABILITY', doctorId, `Doctor status set to ${status}`);
-      this.persist();
-    }
-  }
-
   public importDoctorSlotsFromCSV(rows: any[]): { successCount: number; failedCount: number; errors: string[] } {
     let successCount = 0;
     let failedCount = 0;
@@ -1475,6 +1615,209 @@ class StorageService {
 
     this.persist();
     return rx;
+  }
+
+  public updatePatientProfile(patientId: string, updates: Partial<Patient>): Patient | null {
+    const patient = this.patients.find(p => p.id === patientId);
+    if (!patient) return null;
+
+    Object.assign(patient, updates);
+
+    // Sync with backend API if available
+    apiService.updatePatient(patientId, updates).catch(() => {});
+
+    this.addAuditLog(
+      patient.fullName,
+      'patient',
+      'UPDATE_PROFILE',
+      patientId,
+      `Patient profile updated: ${Object.keys(updates).join(', ')}`
+    );
+
+    this.persist();
+    return patient;
+  }
+
+  public archiveConsultation(appointmentId: string, doctorName: string) {
+    const apt = this.appointments.find(a => a.id === appointmentId);
+    if (!apt) return null;
+
+    apt.status = 'COMPLETED';
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    if (!apt.statusHistory.some(h => h.stage === 'COMPLETED')) {
+      apt.statusHistory.push({
+        stage: 'COMPLETED',
+        timestamp: timeStr,
+        updatedBy: doctorName,
+        role: 'doctor',
+        hospitalName: apt.hospitalName,
+        notes: 'Consultation completed and profile moved to history archive.'
+      });
+    }
+
+    this.addAuditLog(
+      doctorName,
+      'doctor',
+      'ARCHIVE_CONSULTATION',
+      appointmentId,
+      `Consultation archived for patient ${apt.patientName}. Queue advanced.`
+    );
+
+    this.persist();
+    this.notifySubscribers();
+    return apt;
+  }
+
+  // DOCTOR SLOT ROSTER & TIMING MANAGEMENT (Staff Excel Batch Upload)
+  public getDoctorRosters(): DoctorSlotRoster[] {
+    return this.doctorRosters;
+  }
+
+  public saveDoctorRosterBatch(rosters: DoctorSlotRoster[], uploadedByStaffName: string) {
+    // Merge or add new rosters
+    rosters.forEach(newRoster => {
+      const idx = this.doctorRosters.findIndex(
+        r => r.doctorId === newRoster.doctorId && r.date === newRoster.date && r.timeSlot === newRoster.timeSlot
+      );
+      if (idx >= 0) {
+        this.doctorRosters[idx] = { ...this.doctorRosters[idx], ...newRoster };
+      } else {
+        this.doctorRosters.push(newRoster);
+      }
+    });
+
+    this.addAuditLog(
+      uploadedByStaffName,
+      'staff',
+      'ROSTER_EXCEL_UPLOAD',
+      `BATCH_${rosters.length}`,
+      `Uploaded Excel doctor roster with ${rosters.length} timing slots.`
+    );
+
+    this.persist();
+    this.notifySubscribers();
+    return this.doctorRosters;
+  }
+
+  // FIFO TIMESTAMP SLOT FREEZE & RELEASE NOTIFICATION INFRASTRUCTURE
+  public getSlotFreezeRecords(): SlotFreezeRecord[] {
+    return this.slotFreezeRecords;
+  }
+
+  public initiateSlotFreeze(
+    patientId: string,
+    patientName: string,
+    patientPhone: string,
+    doctorId: string,
+    date: string,
+    timeSlot: string
+  ): { success: boolean; reason?: string; message: string; timestamp?: string } {
+    const slotKey = `${doctorId}_${date}_${timeSlot}`;
+    const nowIso = new Date().toISOString();
+    const existing = this.slotFreezeRecords.find(r => r.slotKey === slotKey && r.status === 'FROZEN');
+
+    if (existing) {
+      if (existing.frozenByPatientId === patientId) {
+        return {
+          success: true,
+          message: 'Slot is currently frozen for your booking transaction.',
+          timestamp: existing.timestamp
+        };
+      }
+
+      // FIFO Collision: Another patient already initiated earlier!
+      // Add this patient to the release notification queue for this slot
+      if (!existing.waitingQueue) existing.waitingQueue = [];
+      if (!existing.waitingQueue.some(w => w.patientId === patientId)) {
+        existing.waitingQueue.push({
+          patientId,
+          patientName,
+          patientPhone,
+          requestTimestamp: nowIso
+        });
+      }
+
+      this.persist();
+      this.notifySubscribers();
+
+      return {
+        success: false,
+        reason: 'CONCURRENT_FREEZE_FIFO',
+        message: `Slot (${timeSlot}) is currently LOCKED by another patient (FIFO Priority: Timestamp ${new Date(existing.timestamp).toLocaleTimeString()}). You are registered for instant release notification!`,
+        timestamp: existing.timestamp
+      };
+    }
+
+    // Freeze slot for 10 minutes
+    const expiryTime = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    const freezeRec: SlotFreezeRecord = {
+      slotKey,
+      frozenByPatientId: patientId,
+      patientName,
+      patientPhone,
+      timestamp: nowIso,
+      expiryTimestamp: expiryTime,
+      status: 'FROZEN',
+      waitingQueue: []
+    };
+
+    this.slotFreezeRecords.push(freezeRec);
+
+    this.addAuditLog(
+      patientName,
+      'patient',
+      'SLOT_FREEZE_INITIATED',
+      slotKey,
+      `Instant FIFO slot freeze initialized at ${nowIso} for 10 minutes.`
+    );
+
+    this.persist();
+    this.notifySubscribers();
+
+    return {
+      success: true,
+      message: `Slot (${timeSlot}) frozen for your booking transaction. FIFO Timestamp locked at ${new Date(nowIso).toLocaleTimeString()}.`,
+      timestamp: nowIso
+    };
+  }
+
+  public releaseSlotFreeze(
+    doctorId: string,
+    date: string,
+    timeSlot: string,
+    patientId: string
+  ) {
+    const slotKey = `${doctorId}_${date}_${timeSlot}`;
+    const freezeIdx = this.slotFreezeRecords.findIndex(
+      r => r.slotKey === slotKey && r.frozenByPatientId === patientId && r.status === 'FROZEN'
+    );
+
+    if (freezeIdx >= 0) {
+      const record = this.slotFreezeRecords[freezeIdx];
+      record.status = 'RELEASED';
+
+      // If other patients were waiting, dispatch automated release SMS notification to the next patient in line!
+      if (record.waitingQueue && record.waitingQueue.length > 0) {
+        const nextPatient = record.waitingQueue[0];
+        twilioService.sendSMS(
+          nextPatient.patientPhone,
+          `AarogyaRakshak Notice: Slot ${timeSlot} on ${date} with Dr. ${doctorId} has been RELEASED and is now AVAILABLE for booking!`,
+          'Appointment'
+        );
+      }
+
+      this.addAuditLog(
+        patientId,
+        'patient',
+        'SLOT_FREEZE_RELEASED',
+        slotKey,
+        `Slot freeze released. Waiting queue notified via Twilio SMS.`
+      );
+
+      this.persist();
+      this.notifySubscribers();
+    }
   }
 }
 

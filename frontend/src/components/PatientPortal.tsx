@@ -22,7 +22,10 @@ import {
   Eye,
   CalendarClock,
   XCircle,
-  MessageSquare
+  MessageSquare,
+  Activity,
+  Heart,
+  Baby
 } from 'lucide-react';
 import { Patient, Appointment, HospitalFacility, Doctor, LanguageCode, UserRole } from '../types';
 import { storageService } from '../services/storageService';
@@ -37,7 +40,7 @@ interface PatientPortalProps {
   language: LanguageCode;
   onOpenEmergency: () => void;
   onOpenRegistration: () => void;
-  defaultActiveTab?: 'dashboard' | 'book' | 'vaccination' | 'records' | 'prescriptions' | 'teleconsult';
+  defaultActiveTab?: 'dashboard' | 'book' | 'vaccination' | 'records' | 'prescriptions' | 'teleconsult' | 'profile';
 }
 
 export const PatientPortal: React.FC<PatientPortalProps> = ({
@@ -52,7 +55,16 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
   const [appointments, setAppointments] = useState<Appointment[]>(storageService.getAppointments());
   const [hospitals, setHospitals] = useState<HospitalFacility[]>(storageService.getHospitals());
   const [doctors, setDoctors] = useState<Doctor[]>(storageService.getDoctors());
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'book' | 'vaccination' | 'records' | 'prescriptions' | 'teleconsult'>(defaultActiveTab);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'book' | 'vaccination' | 'records' | 'prescriptions' | 'teleconsult' | 'profile'>(defaultActiveTab);
+
+  // Profile Edit State
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [editPhone, setEditPhone] = useState('');
+  const [editAddress, setEditAddress] = useState('');
+  const [editVillage, setEditVillage] = useState('');
+  const [editEmergencyName, setEditEmergencyName] = useState('');
+  const [editEmergencyPhone, setEditEmergencyPhone] = useState('');
+  const [editEmergencyRelation, setEditEmergencyRelation] = useState('');
 
   // Active modal controls
   const [selectedQrAppointment, setSelectedQrAppointment] = useState<Appointment | null>(null);
@@ -97,6 +109,34 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
   const [patientCancelApt, setPatientCancelApt] = useState<Appointment | null>(null);
   const [patientCancelReason, setPatientCancelReason] = useState('Feeling better / symptoms resolved');
 
+  // SOS Emergency & Filter Search State
+  const [sosModalOpen, setSosModalOpen] = useState(false);
+  const [sosDispatchData, setSosDispatchData] = useState<any | null>(null);
+  const [aptSearchFilter, setAptSearchFilter] = useState('');
+
+  const handleTriggerSOS = () => {
+    if (!currentPatient) return;
+    const locationStr = 'Morgaon Village (GPS: 18.2325° N, 74.3168° E)';
+    const alertId = storageService.triggerEmergencySOS(
+      currentPatient.id,
+      currentPatient.fullName,
+      currentPatient.phone,
+      locationStr,
+      currentPatient.guardianName,
+      currentPatient.emergencyContact?.phone || currentPatient.phone
+    );
+
+    setSosDispatchData({
+      alertId,
+      patientName: currentPatient.fullName,
+      phone: currentPatient.phone,
+      location: locationStr,
+      guardianPhone: currentPatient.emergencyContact?.phone || currentPatient.phone,
+      timestamp: new Date().toLocaleTimeString()
+    });
+    setSosModalOpen(true);
+  };
+
   useEffect(() => {
     const update = () => {
       setPatients(storageService.getPatients());
@@ -114,6 +154,45 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
 
   const currentPatient = patients.find(p => p.id === selectedPatientId) || patients[0];
   const patientAppointments = appointments.filter(a => a.patientId === currentPatient?.id);
+
+  // Recently Consulted Doctor (For 1-click re-booking)
+  const recentAptWithDoc = patientAppointments.find(
+    a => a.doctorId && (a.status === 'COMPLETED' || a.status === 'CONFIRMED' || a.status === 'ARRIVED')
+  );
+  const recentlyConsultedDoc = recentAptWithDoc
+    ? doctors.find(d => d.id === recentAptWithDoc.doctorId) || doctors.find(d => d.name === recentAptWithDoc.doctorName)
+    : null;
+
+  const handleOpenEditProfile = () => {
+    if (!currentPatient) return;
+    setEditPhone(currentPatient.phone || '');
+    setEditAddress(currentPatient.address || '');
+    setEditVillage(currentPatient.village || '');
+    setEditEmergencyName(currentPatient.emergencyContact?.name || '');
+    setEditEmergencyPhone(currentPatient.emergencyContact?.phone || '');
+    setEditEmergencyRelation(currentPatient.emergencyContact?.relation || '');
+    setShowEditProfileModal(true);
+  };
+
+  const handleSaveProfileEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentPatient) return;
+
+    storageService.updatePatientProfile(currentPatient.id, {
+      phone: editPhone,
+      address: editAddress,
+      village: editVillage,
+      emergencyContact: {
+        name: editEmergencyName,
+        phone: editEmergencyPhone,
+        relation: editEmergencyRelation
+      }
+    });
+
+    setPatientActionNotice(`Personal Profile updated successfully for ${currentPatient.fullName}!`);
+    setTimeout(() => setPatientActionNotice(null), 6000);
+    setShowEditProfileModal(false);
+  };
 
   // NLP evaluation as user types symptoms
   const handleSymptomChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -347,8 +426,16 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
                 ))}
               </select>
               <button
+                onClick={handleTriggerSOS}
+                className="px-4 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs rounded-xl flex items-center gap-1.5 transition shadow-md animate-pulse border border-rose-300 cursor-pointer"
+                title="Trigger Immediate Emergency 108 Ambulance & Guardian Voice Call Alert"
+              >
+                <AlertTriangle className="w-4 h-4 text-white" />
+                EMERGENCY SOS
+              </button>
+              <button
                 onClick={onOpenRegistration}
-                className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-500 text-slate-950 rounded text-xs font-bold flex items-center gap-1 transition shadow-sm"
+                className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-slate-950 rounded text-xs font-bold flex items-center gap-1 transition shadow-sm"
               >
                 <PlusCircle className="w-3.5 h-3.5" /> New ABHA Registration
               </button>
@@ -461,6 +548,14 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
           Longitudinal Health Records (ABHA)
         </button>
         <button
+          onClick={() => setActiveTab('profile')}
+          className={`px-4 py-2.5 rounded transition shrink-0 ${
+            activeTab === 'profile' ? 'bg-blue-600 text-white shadow-sm border-b-2 border-amber-400' : 'text-slate-300 hover:text-white hover:bg-blue-900/50'
+          }`}
+        >
+          My ABHA Health Profile (View & Edit)
+        </button>
+        <button
           onClick={() => setActiveTab('teleconsult')}
           className={`px-4 py-2.5 rounded transition shrink-0 ${
             activeTab === 'teleconsult' ? 'bg-blue-600 text-white shadow-sm border-b-2 border-amber-400' : 'text-slate-300 hover:text-white hover:bg-blue-900/50'
@@ -521,6 +616,95 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
       {/* TAB 1: ACTIVE APPOINTMENTS & TRACKERS */}
       {activeTab === 'dashboard' && (
         <div className="space-y-6">
+          {/* RISK-BASED SMART HEALTH & VACCINATION REMINDERS PANEL */}
+          <div className="bg-gradient-to-r from-blue-900 to-[#0F3460] text-white p-5 rounded-2xl shadow-md border border-amber-500/30 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-700/50 pb-2.5">
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-amber-400 animate-pulse" />
+                <h3 className="font-bold text-white text-sm uppercase tracking-wide">
+                  Smart Health & Vaccination Reminders ({currentPatient?.highRiskCategory || 'General Care'})
+                </h3>
+              </div>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-400 text-slate-950">
+                {currentPatient?.isHighRisk ? 'High Priority Attention Required' : 'Active Routine Care'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              {/* Chronic Disease Alert */}
+              {currentPatient?.chronicConditions && currentPatient.chronicConditions.length > 0 && (
+                <div className="bg-blue-950/90 border border-blue-400/40 p-3.5 rounded-xl space-y-1">
+                  <div className="font-bold text-amber-300 flex items-center gap-1.5">
+                    <Activity className="w-4 h-4 text-amber-400" /> Chronic Disease Follow-up Alert
+                  </div>
+                  <p className="text-slate-200">
+                    Monthly BP & Glucose review due for: <strong>{currentPatient.chronicConditions.join(', ')}</strong>. Refill current medications.
+                  </p>
+                  <button
+                    onClick={() => { setActiveTab('book'); setBookingStep(1); }}
+                    className="mt-1 text-[11px] font-bold text-amber-400 hover:underline flex items-center gap-1"
+                  >
+                    Schedule Routine OPD Review →
+                  </button>
+                </div>
+              )}
+
+              {/* Maternal / ANC Alert */}
+              {currentPatient?.highRiskCategory === 'Maternal' && (
+                <div className="bg-pink-950/90 border border-pink-400/40 p-3.5 rounded-xl space-y-1">
+                  <div className="font-bold text-pink-300 flex items-center gap-1.5">
+                    <Heart className="w-4 h-4 text-pink-400" /> Pradhan Mantri Surakshit Matritva (ANC)
+                  </div>
+                  <p className="text-slate-200">
+                    ANC Trimester Check-up & Tetanus Toxoid (TT) Immunization due. Session site: PHC Morgaon.
+                  </p>
+                  <button
+                    onClick={() => setActiveTab('vaccination')}
+                    className="mt-1 text-[11px] font-bold text-pink-300 hover:underline flex items-center gap-1"
+                  >
+                    Book ANC Vaccination Slot →
+                  </button>
+                </div>
+              )}
+
+              {/* Pediatric / Child Alert */}
+              {currentPatient && currentPatient.age <= 12 && (
+                <div className="bg-emerald-950/90 border border-emerald-400/40 p-3.5 rounded-xl space-y-1">
+                  <div className="font-bold text-emerald-300 flex items-center gap-1.5">
+                    <Baby className="w-4 h-4 text-emerald-400" /> U-WIN Pediatric Immunization Schedule
+                  </div>
+                  <p className="text-slate-200">
+                    Due: MR (Measles & Rubella) Dose 2 & Oral Polio Booster. Location: Morgaon Sub-Centre.
+                  </p>
+                  <button
+                    onClick={() => setActiveTab('vaccination')}
+                    className="mt-1 text-[11px] font-bold text-emerald-300 hover:underline flex items-center gap-1"
+                  >
+                    Book U-WIN Child Slot →
+                  </button>
+                </div>
+              )}
+
+              {/* Adult / Elderly Preventive Care */}
+              {currentPatient && currentPatient.age > 40 && (
+                <div className="bg-amber-950/80 border border-amber-400/40 p-3.5 rounded-xl space-y-1">
+                  <div className="font-bold text-amber-300 flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4 text-amber-400" /> Adult Health & Immunization Check
+                  </div>
+                  <p className="text-slate-200">
+                    Annual Lipid, Diabetes, and Adult Pneumococcal Screening recommended for citizens over 40.
+                  </p>
+                  <button
+                    onClick={() => { setActiveTab('book'); setBookingStep(1); }}
+                    className="mt-1 text-[11px] font-bold text-amber-300 hover:underline flex items-center gap-1"
+                  >
+                    Book Health Screening →
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="flex justify-between items-center">
             <h3 className="text-base font-bold text-slate-900">Your Scheduled Visits & Continuity Tracking</h3>
             <button
@@ -813,17 +997,48 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
 
           {bookingStep === 2 && (
             <div className="space-y-4">
-              {/* Doctor Search */}
+              {/* Recently Consulted Doctor Badge */}
+              {recentlyConsultedDoc && (
+                <div className="bg-amber-50 border border-amber-300 rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-amber-400 text-slate-950 font-extrabold flex items-center justify-center text-sm shadow-xs">
+                      🩺
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                        <span>Recently Consulted Medical Officer</span>
+                        <span className="px-2 py-0.5 bg-amber-200 text-amber-900 text-[10px] rounded-full font-bold uppercase">
+                          Previous Doctor
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-800 font-bold">{recentlyConsultedDoc.name} ({recentlyConsultedDoc.specialty})</div>
+                      <div className="text-[11px] text-slate-600">{recentlyConsultedDoc.hospitalName}</div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedDoctorId(recentlyConsultedDoc.id);
+                      setSelectedHospitalId(recentlyConsultedDoc.hospitalId);
+                    }}
+                    className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-slate-950 rounded-xl text-xs font-extrabold shadow-sm transition shrink-0"
+                  >
+                    1-Click Re-Book Dr. {recentlyConsultedDoc.name.split(' ').pop()}
+                  </button>
+                </div>
+              )}
+
+              {/* Multi-criteria Doctor & Hospital Search */}
               <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Need a specific doctor? (Optional)
+                  Search Doctor Name, Specialty or Hospital Facility (Optional)
                 </label>
                 <input
                   type="text"
-                  placeholder="Search by doctor name or specialty..."
+                  placeholder="e.g. Type doctor name, 'Cardiology', or 'Morgaon PHC'..."
                   value={doctorSearchQuery}
                   onChange={e => setDoctorSearchQuery(e.target.value)}
-                  className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 bg-white"
+                  className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 bg-white focus:outline-emerald-600 font-medium"
                 />
               </div>
 
@@ -1232,6 +1447,204 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
           >
             Launch eSanjeevani Video Interface
           </button>
+        </div>
+      )}
+
+      {/* TAB 6: MY ABHA PROFILE VIEW & EDIT */}
+      {activeTab === 'profile' && currentPatient && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs max-w-3xl mx-auto space-y-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-[#07172F] text-amber-300 font-extrabold flex items-center justify-center text-xl shadow-md border-2 border-amber-400">
+                {currentPatient.fullName.charAt(0)}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-bold text-slate-900 font-serif">{currentPatient.fullName}</h2>
+                  <span className="px-2.5 py-0.5 rounded font-mono text-xs font-bold bg-blue-900 text-amber-300">
+                    {currentPatient.id}
+                  </span>
+                </div>
+                <div className="text-xs text-slate-500 font-mono mt-0.5">
+                  ABHA ID: <strong className="text-slate-800">{currentPatient.abhaId}</strong>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handleOpenEditProfile}
+              className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-slate-950 text-xs font-extrabold rounded-xl shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+            >
+              Edit Personal Information & Contacts
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+              <div className="font-bold text-slate-900 uppercase text-[11px] text-blue-900 tracking-wider">Demographic Information</div>
+              <div className="flex justify-between border-b border-slate-200/60 pb-1">
+                <span className="text-slate-500">Age & Gender:</span>
+                <span className="font-semibold text-slate-900">{currentPatient.age} Yrs • {currentPatient.gender}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-200/60 pb-1">
+                <span className="text-slate-500">Date of Birth:</span>
+                <span className="font-mono text-slate-900">{currentPatient.dob}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-200/60 pb-1">
+                <span className="text-slate-500">Registered Phone:</span>
+                <span className="font-mono font-bold text-slate-900">{currentPatient.phone}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Aadhaar (Masked):</span>
+                <span className="font-mono text-slate-700">{currentPatient.aadhaarMasked}</span>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+              <div className="font-bold text-slate-900 uppercase text-[11px] text-blue-900 tracking-wider">Location & Guardian Details</div>
+              <div className="flex justify-between border-b border-slate-200/60 pb-1">
+                <span className="text-slate-500">Village & District:</span>
+                <span className="font-semibold text-slate-900">{currentPatient.village}, {currentPatient.district}</span>
+              </div>
+              <div className="flex justify-between border-b border-slate-200/60 pb-1">
+                <span className="text-slate-500">Full Address:</span>
+                <span className="font-medium text-slate-900 text-right">{currentPatient.address}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Emergency Contact / Guardian:</span>
+                <span className="font-bold text-slate-900">
+                  {currentPatient.emergencyContact?.name || currentPatient.guardianName || 'N/A'} ({currentPatient.emergencyContact?.phone || currentPatient.phone})
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-xs">
+            <div className="font-bold text-slate-900 uppercase text-[11px] text-blue-900 tracking-wider">Clinical Summary & Consent Settings</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <span className="text-slate-500 block font-medium">Chronic Conditions:</span>
+                <div className="text-slate-900 font-semibold mt-0.5">
+                  {currentPatient.chronicConditions.join(', ') || 'No chronic conditions reported'}
+                </div>
+              </div>
+              <div>
+                <span className="text-slate-500 block font-medium">Known Allergies:</span>
+                <div className="text-slate-900 font-semibold mt-0.5">
+                  {currentPatient.allergies.join(', ') || 'No known drug allergies'}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-slate-600">
+              <span>ASHA Assistance Consent: <strong className="text-emerald-700">{currentPatient.consent.allowAshaAssistance ? 'ENABLED' : 'RESTRICTED'}</strong></span>
+              <span>Longitudinal Record Sharing: <strong className="text-emerald-700">{currentPatient.consent.allowRecordSharing ? 'GRANTED' : 'RESTRICTED'}</strong></span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT PROFILE MODAL */}
+      {showEditProfileModal && currentPatient && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 p-6 space-y-4">
+            <div className="flex justify-between items-start border-b border-slate-100 pb-3">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-900">Self-Service Profile Manager</span>
+                <h3 className="text-base font-bold text-slate-900">Edit Details for {currentPatient.fullName}</h3>
+              </div>
+              <button
+                onClick={() => setShowEditProfileModal(false)}
+                className="text-slate-400 hover:text-slate-600 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProfileEdit} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Mobile Phone Number</label>
+                <input
+                  type="text"
+                  required
+                  value={editPhone}
+                  onChange={e => setEditPhone(e.target.value)}
+                  className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 focus:outline-blue-900 font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Village Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editVillage}
+                  onChange={e => setEditVillage(e.target.value)}
+                  className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 focus:outline-blue-900 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">Residential Address</label>
+                <textarea
+                  rows={2}
+                  required
+                  value={editAddress}
+                  onChange={e => setEditAddress(e.target.value)}
+                  className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-300 focus:outline-blue-900"
+                />
+              </div>
+
+              <div className="border-t border-slate-100 pt-3 space-y-3">
+                <div className="font-bold text-slate-900 text-xs">Emergency Contact / Guardian Information</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Contact Name</label>
+                    <input
+                      type="text"
+                      value={editEmergencyName}
+                      onChange={e => setEditEmergencyName(e.target.value)}
+                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">Relation</label>
+                    <input
+                      type="text"
+                      value={editEmergencyRelation}
+                      onChange={e => setEditEmergencyRelation(e.target.value)}
+                      className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Emergency Phone Number</label>
+                  <input
+                    type="text"
+                    value={editEmergencyPhone}
+                    onChange={e => setEditEmergencyPhone(e.target.value)}
+                    className="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditProfileModal(false)}
+                  className="px-4 py-2 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-blue-900 hover:bg-blue-800 text-white rounded-xl text-xs font-bold shadow-xs"
+                >
+                  Save Profile Changes
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

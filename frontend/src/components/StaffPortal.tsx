@@ -22,7 +22,7 @@ import {
   Check,
   CalendarClock
 } from 'lucide-react';
-import { Appointment, LanguageCode, AppointmentStatus } from '../types';
+import { Appointment, LanguageCode, AppointmentStatus, DoctorSlotRoster } from '../types';
 import { storageService } from '../services/storageService';
 import { QRCodeModal } from './QRCodeModal';
 
@@ -45,6 +45,10 @@ export const StaffPortal: React.FC<StaffPortalProps> = ({ language, onOpenSmsDra
   const [verificationInput, setVerificationInput] = useState('');
   const [verifyFeedback, setVerifyFeedback] = useState<string | null>(null);
 
+  // Doctor Excel Roster Upload State
+  const [parsedRosterList, setParsedRosterList] = useState<DoctorSlotRoster[]>([]);
+  const [activeRosters, setActiveRosters] = useState<DoctorSlotRoster[]>(storageService.getDoctorRosters());
+
   // Reschedule / Action modal state
   const [activeActionApt, setActiveActionApt] = useState<Appointment | null>(null);
   const [actionType, setActionType] = useState<'CONFIRM' | 'RESCHEDULE' | 'CANCEL' | 'REJECT' | 'ASSIGN_ROOM' | null>(null);
@@ -63,10 +67,77 @@ export const StaffPortal: React.FC<StaffPortalProps> = ({ language, onOpenSmsDra
   useEffect(() => {
     const update = () => {
       setAppointments(storageService.getAppointments());
+      setActiveRosters(storageService.getDoctorRosters());
     };
     update();
     return storageService.subscribe(update);
   }, []);
+
+  const handleDownloadRosterTemplate = () => {
+    const csvContent = "Doctor Name,Specialty,Hospital Name,Date,Slot Timings,Max Capacity\n" +
+      "Dr. Aniruddha Kulkarni,General Medicine,Primary Health Centre (PHC) Morgaon,2026-09-16,09:00 AM - 10:00 AM,10\n" +
+      "Dr. Aniruddha Kulkarni,General Medicine,Primary Health Centre (PHC) Morgaon,2026-09-16,10:00 AM - 11:00 AM,10\n" +
+      "Dr. Snehal Deshmukh,Obstetrics & Gynecology,Rural Hospital (RH) Baramati,2026-09-16,11:00 AM - 12:00 PM,8\n" +
+      "Dr. Thorat,Pediatrics,Primary Health Centre (PHC) Morgaon,2026-09-16,02:00 PM - 03:00 PM,12\n";
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'doctor_roster_template.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleRosterFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      if (!text) return;
+
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      if (lines.length <= 1) return;
+
+      const items: DoctorSlotRoster[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const parts = lines[i].split(',').map(p => p.trim());
+        if (parts.length >= 5) {
+            items.push({
+              id: `ROS-${Date.now()}-${i}`,
+              doctorId: `DOC-${parts[0].replace(/\s+/g, '-').toUpperCase()}`,
+              doctorName: parts[0] || 'Medical Officer',
+              specialty: parts[1] || 'General Medicine',
+              hospitalId: selectedHospitalId,
+              hospitalName: parts[2] || currentHospital.name,
+              date: parts[3] || new Date().toISOString().split('T')[0],
+              timeSlot: parts[4] || '09:00 AM',
+              maxCapacity: parseInt(parts[5]) || 10,
+              bookedCount: 0,
+              status: 'AVAILABLE'
+            });
+        }
+      }
+
+      setParsedRosterList(items);
+      setRecentActionNotice(`Excel roster parsed successfully! Previewing ${items.length} slot timing records.`);
+      setTimeout(() => setRecentActionNotice(null), 5000);
+    };
+
+    reader.readAsText(file);
+  };
+
+  const handleSaveRosterBatch = () => {
+    if (parsedRosterList.length === 0) return;
+    storageService.saveDoctorRosterBatch(parsedRosterList, staffName);
+    setActiveRosters(storageService.getDoctorRosters());
+    setParsedRosterList([]);
+    setRecentActionNotice(`Successfully imported ${parsedRosterList.length} doctor timing slots to facility roster!`);
+    setTimeout(() => setRecentActionNotice(null), 8000);
+  };
 
   // Filter appointments by selected hospital facility
   const facilityAppointments = appointments.filter(a =>
@@ -233,6 +304,7 @@ export const StaffPortal: React.FC<StaffPortalProps> = ({ language, onOpenSmsDra
       )}
 
       {/* Facility Switcher & Facility Header Banner */}
+      {/* Facility Switcher, Emergency Admissions Toggle & Facility Header Banner */}
       <div className="bg-gradient-to-r from-[#07172F] to-[#0F3460] text-white p-4 rounded-xl border border-amber-500/40 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-amber-500 text-[#07172F] flex items-center justify-center font-bold text-lg shadow-xs shrink-0">
@@ -249,21 +321,76 @@ export const StaffPortal: React.FC<StaffPortalProps> = ({ language, onOpenSmsDra
           </div>
         </div>
 
-        <div className="flex items-center gap-2 w-full md:w-auto">
-          <label className="text-xs font-bold text-amber-300 whitespace-nowrap">Switch Facility:</label>
-          <select
-            value={selectedHospitalId}
-            onChange={e => setSelectedHospitalId(e.target.value)}
-            className="bg-[#07172F] text-xs font-semibold text-white px-3 py-1.5 rounded-lg border border-blue-600 focus:outline-none cursor-pointer w-full md:w-auto"
-          >
-            {hospitalList.map(h => (
-              <option key={h.id} value={h.id}>
-                {h.name} ({h.type})
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          {/* Active Hospital Emergency Admissions Toggle */}
+          <div className="bg-blue-950/90 px-3 py-1.5 rounded-xl border border-amber-500/40 flex items-center gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300">
+              Emergency Admissions:
+            </span>
+            <button
+              onClick={() => {
+                const nextStatus = currentHospital.emergencyStatus === 'Accepting' ? 'Temporarily Unavailable' : 'Accepting';
+                storageService.updateHospitalEmergencyStatus(selectedHospitalId, nextStatus);
+                setRecentActionNotice(`Hospital Emergency Admission status updated to '${nextStatus}'.`);
+                setTimeout(() => setRecentActionNotice(null), 5000);
+              }}
+              className={`px-2.5 py-1 rounded text-xs font-bold transition shadow-xs ${
+                currentHospital.emergencyStatus === 'Accepting'
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                  : 'bg-rose-600 hover:bg-rose-500 text-white animate-pulse'
+              }`}
+            >
+              {currentHospital.emergencyStatus === 'Accepting' ? '🟢 ACCEPTING' : '🔴 TEMPORARILY UNAVAILABLE'}
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-bold text-amber-300 whitespace-nowrap">Switch Facility:</label>
+            <select
+              value={selectedHospitalId}
+              onChange={e => setSelectedHospitalId(e.target.value)}
+              className="bg-[#07172F] text-xs font-semibold text-white px-3 py-1.5 rounded-lg border border-blue-600 focus:outline-none cursor-pointer"
+            >
+              {hospitalList.map(h => (
+                <option key={h.id} value={h.id}>
+                  {h.name} ({h.type})
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
+
+      {/* DOCTOR DUTY STATUS & BUSY/LEAVE ALERT BANNER FOR STAFF */}
+      {storageService.getDoctors().some(d => d.status === 'Busy' || d.status === 'On Leave' || d.status === 'Emergency Duty') && (
+        <div className="bg-amber-900/90 text-amber-100 border border-amber-500 p-3.5 rounded-xl text-xs space-y-1.5 animate-in fade-in">
+          <div className="font-bold flex items-center gap-2 text-amber-200">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>Doctor Duty Status Alerts — Staff Attention Required</span>
+          </div>
+          <div className="flex flex-wrap gap-2 pt-1">
+            {storageService.getDoctors()
+              .filter(d => d.status === 'Busy' || d.status === 'On Leave' || d.status === 'Emergency Duty')
+              .map(doc => (
+                <div key={doc.id} className="bg-black/40 px-3 py-1 rounded-lg border border-amber-400/40 text-[11px] flex items-center gap-2">
+                  <span className="font-bold text-white">{doc.name}</span>
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase ${
+                    doc.status === 'Busy'
+                      ? 'bg-rose-800 text-rose-200'
+                      : doc.status === 'Emergency Duty'
+                      ? 'bg-amber-700 text-amber-100'
+                      : 'bg-slate-700 text-slate-300'
+                  }`}>
+                    {doc.status}
+                  </span>
+                  <span className="text-amber-300 text-[10px]">
+                    (Staff: Please adjust OPD token estimates or offer alternate doctor)
+                  </span>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
 
       {/* Staff Operational View Navigation Tabs */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-[#07172F] p-2 rounded-xl border border-slate-300 shadow-sm text-white">
@@ -344,6 +471,21 @@ export const StaffPortal: React.FC<StaffPortalProps> = ({ language, onOpenSmsDra
             <span>OPD Hall Display Board</span>
             <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] bg-blue-900 text-amber-300 font-mono font-bold">
               {arrivedCount + inConsultCount}
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('roster')}
+            className={`px-3.5 py-2 rounded text-xs font-bold flex items-center gap-2 transition shrink-0 ${
+              activeTab === 'roster'
+                ? 'bg-blue-600 text-white shadow-xs border-b-2 border-amber-400'
+                : 'text-slate-300 hover:text-white hover:bg-blue-900/50'
+            }`}
+          >
+            <CalendarClock className="w-3.5 h-3.5 text-amber-400" />
+            <span>Doctor Roster & Timings (Excel Upload)</span>
+            <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] bg-blue-900 text-amber-300 font-mono font-bold">
+              {activeRosters.length} Slots
             </span>
           </button>
         </div>
@@ -784,6 +926,141 @@ export const StaffPortal: React.FC<StaffPortalProps> = ({ language, onOpenSmsDra
           </table>
         </div>
       </div>
+
+      {/* TAB: DOCTOR SLOT ROSTER EXCEL / CSV UPLOAD & TIMINGS CONFIGURATION */}
+      {activeTab === 'roster' && (
+        <div className="space-y-6 animate-in fade-in">
+          <div className="bg-white rounded-2xl border border-slate-300 p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <UploadCloud className="w-5 h-5 text-blue-700" />
+                  Doctor Slot Timings & Roster Upload (Excel / CSV)
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Upload hospital doctor schedules and available slot timings. Patients can only select slots according to this uploaded roster.
+                </p>
+              </div>
+
+              <button
+                onClick={handleDownloadRosterTemplate}
+                className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+              >
+                <FileCheck className="w-4 h-4 text-emerald-700" />
+                Download Sample Roster CSV Template
+              </button>
+            </div>
+
+            {/* File Upload Box */}
+            <div className="border-2 border-dashed border-blue-300 rounded-2xl bg-blue-50/50 p-6 text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-700 mx-auto flex items-center justify-center">
+                <UploadCloud className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-slate-800 block">Select or Drag Excel (.xlsx) / CSV Doctor Roster File</span>
+                <span className="text-[11px] text-slate-500">Columns: Doctor Name, Specialty, Hospital, Date (YYYY-MM-DD), Slot Timings, Max Capacity</span>
+              </div>
+              <input
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                onChange={handleRosterFileChange}
+                className="hidden"
+                id="roster-file-input"
+              />
+              <label
+                htmlFor="roster-file-input"
+                className="inline-flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-sm cursor-pointer transition"
+              >
+                <UploadCloud className="w-4 h-4" /> Browse Excel File
+              </label>
+            </div>
+
+            {/* Parsed Preview Table */}
+            {parsedRosterList.length > 0 && (
+              <div className="space-y-3 pt-4 border-t border-slate-200">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide">
+                    Parsed Roster Preview ({parsedRosterList.length} Slot Timings Found)
+                  </h4>
+                  <button
+                    onClick={handleSaveRosterBatch}
+                    className="px-5 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold shadow-md flex items-center gap-2 cursor-pointer"
+                  >
+                    <Check className="w-4 h-4" /> Import Roster to Live System
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-[10px]">
+                      <tr>
+                        <th className="p-3">Doctor Name</th>
+                        <th className="p-3">Specialty</th>
+                        <th className="p-3">Hospital</th>
+                        <th className="p-3">Available Date</th>
+                        <th className="p-3">Slot Timings</th>
+                        <th className="p-3">Max Capacity</th>
+                        <th className="p-3">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-slate-800 font-medium">
+                      {parsedRosterList.map((r, i) => (
+                        <tr key={i} className="hover:bg-slate-50">
+                          <td className="p-3 font-bold">{r.doctorName}</td>
+                          <td className="p-3">{r.specialty}</td>
+                          <td className="p-3">{r.hospitalName}</td>
+                          <td className="p-3">{r.date}</td>
+                          <td className="p-3 font-mono font-bold text-blue-900">{r.timeSlot}</td>
+                          <td className="p-3">{r.maxCapacity} Patients</td>
+                          <td className="p-3">
+                            <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded">
+                              READY TO IMPORT
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Currently Saved Live Doctor Rosters */}
+            <div className="pt-6 border-t border-slate-200 space-y-3">
+              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-2">
+                <CalendarClock className="w-4 h-4 text-emerald-700" /> Current Active Hospital Slot Rosters
+              </h4>
+              {activeRosters.length === 0 ? (
+                <div className="p-6 bg-slate-50 rounded-xl text-center text-xs text-slate-500">
+                  No custom Excel rosters uploaded yet. Default doctor schedules are active.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {activeRosters.map((ros, idx) => (
+                    <div key={idx} className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-1.5 text-xs">
+                      <div className="flex justify-between font-bold text-slate-900">
+                        <span>{ros.doctorName}</span>
+                        <span className="px-2 py-0.5 bg-blue-100 text-blue-900 text-[10px] rounded font-mono">
+                          {ros.timeSlot}
+                        </span>
+                      </div>
+                      <div className="text-slate-600 text-[11px]">{ros.specialty} • {ros.date}</div>
+                      <div className="flex justify-between items-center text-[10px] pt-1 border-t border-slate-200">
+                        <span className="text-slate-500">Capacity: {ros.bookedCount}/{ros.maxCapacity} Booked</span>
+                        <span className={`px-2 py-0.5 rounded font-bold ${
+                          ros.status === 'FROZEN' ? 'bg-amber-100 text-amber-900' : ros.status === 'FULL' ? 'bg-rose-100 text-rose-900' : 'bg-emerald-100 text-emerald-900'
+                        }`}>
+                          {ros.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ACTION MODAL (CONFIRM / RESCHEDULE / CANCEL) */}
       {activeActionApt && actionType && (

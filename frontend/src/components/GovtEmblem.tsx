@@ -49,25 +49,23 @@ export const AarogyaRakshakLogo: React.FC<{ className?: string }> = ({ className
   />
 );
 
-// ABHA (Ayushman Bharat Digital Mission) Badge
+// ABDM Health Authority Badge
 export const AbhaBadge: React.FC<{ className?: string }> = ({ className = "h-5" }) => (
   <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-blue-900/90 text-blue-100 border border-blue-600 text-[10px] font-bold ${className}`}>
-    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-    <span>ABHA Mapped</span>
+    <span>ABDM Gateway Linked</span>
   </div>
 );
 
 // U-WIN Immunization Badge
 export const UWinBadge: React.FC<{ className?: string }> = ({ className = "h-5" }) => (
   <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-900/90 text-emerald-100 border border-emerald-600 text-[10px] font-bold ${className}`}>
-    <span className="text-amber-400">★</span>
-    <span>U-WIN Verified</span>
+    <span>Universal Immunization</span>
   </div>
 );
 
 // eSanjeevani Teleconsultation Badge
 export const ESanjeevaniBadge: React.FC<{ className?: string }> = ({ className = "h-5" }) => (
   <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-amber-950/90 text-amber-200 border border-amber-600 text-[10px] font-bold ${className}`}>
-    <span>e-Sanjeevani 2.0</span>
+    <span>Teleconsultation OPD</span>
   </div>
 );

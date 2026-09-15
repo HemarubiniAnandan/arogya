@@ -51,9 +51,38 @@ export const AshaPortal: React.FC<AshaPortalProps> = ({ language, onOpenEmergenc
   const [assistedHospital, setAssistedHospital] = useState('HOSP-PHC-MOR');
   const [bookingFeedback, setBookingFeedback] = useState<string | null>(null);
 
-  // New patient registration modal
+  // New patient registration modal & Emergency SOS state
   const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [viewingQrApt, setViewingQrApt] = useState<Appointment | null>(null);
+
+  // ASHA Emergency SOS Dispatch State
+  const [ashaSosModalOpen, setAshaSosModalOpen] = useState(false);
+  const [ashaSosSelectedPatientId, setAshaSosSelectedPatientId] = useState<string>('');
+  const [ashaSosDispatchData, setAshaSosDispatchData] = useState<any | null>(null);
+
+  const handleAshaTriggerSOS = () => {
+    const targetPatient = patients.find(p => p.id === ashaSosSelectedPatientId) || patients[0];
+    if (!targetPatient) return;
+
+    const locationStr = `Morgaon Village Ward 4 (GPS: 18.2325° N, 74.3168° E - Dispatched by ASHA ${ashaName})`;
+    const alertId = storageService.triggerEmergencySOS(
+      targetPatient.id,
+      targetPatient.fullName,
+      targetPatient.phone,
+      locationStr,
+      targetPatient.guardianName,
+      targetPatient.emergencyContact?.phone || targetPatient.phone
+    );
+
+    setAshaSosDispatchData({
+      alertId,
+      patientName: targetPatient.fullName,
+      phone: targetPatient.phone,
+      location: locationStr,
+      guardianPhone: targetPatient.emergencyContact?.phone || targetPatient.phone,
+      timestamp: new Date().toLocaleTimeString()
+    });
+  };
 
   useEffect(() => {
     const update = () => {
@@ -153,7 +182,18 @@ export const AshaPortal: React.FC<AshaPortalProps> = ({ language, onOpenEmergenc
             </div>
           </div>
 
-          <div className="flex items-center gap-2 w-full md:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+            <button
+              onClick={() => {
+                setAshaSosSelectedPatientId(authorizedPatients[0]?.id || '');
+                setAshaSosDispatchData(null);
+                setAshaSosModalOpen(true);
+              }}
+              className="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs rounded-xl transition shadow-md animate-pulse border border-rose-300 flex items-center justify-center gap-1.5 cursor-pointer"
+              title="Dispatch Emergency SOS on behalf of a village patient"
+            >
+              <AlertTriangle className="w-4 h-4 text-white" /> ASHA Emergency SOS
+            </button>
             <button
               onClick={() => setShowRegisterModal(true)}
               className="flex-1 md:flex-none px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded text-xs font-bold transition shadow-sm flex items-center justify-center gap-1.5"
@@ -575,6 +615,97 @@ export const AshaPortal: React.FC<AshaPortalProps> = ({ language, onOpenEmergenc
           qrData={viewingQrApt.qrCodeData}
           onClose={() => setViewingQrApt(null)}
         />
+      )}
+      {/* ASHA EMERGENCY SOS DISPATCH MODAL */}
+      {ashaSosModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-xs p-4 overflow-y-auto">
+          <div className="bg-[#07172F] text-white rounded-2xl max-w-lg w-full shadow-2xl border-2 border-rose-500 p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-rose-500/40 pb-3">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-6 h-6 text-rose-500 animate-pulse" />
+                <h3 className="text-base font-black text-rose-400">ASHA Field Worker Emergency SOS Dispatch</h3>
+              </div>
+              <button
+                onClick={() => setAshaSosModalOpen(false)}
+                className="text-slate-400 hover:text-white font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {!ashaSosDispatchData ? (
+              <div className="space-y-4 text-xs">
+                <p className="text-slate-300">
+                  Select the patient requiring emergency assistance. GPS location will be locked and sent to 108 Ambulance, and automated Voice Call + SMS alerts will be sent to the guardian.
+                </p>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-amber-300 uppercase mb-1">
+                    Select Emergency Patient from Village Registry:
+                  </label>
+                  <select
+                    value={ashaSosSelectedPatientId}
+                    onChange={e => setAshaSosSelectedPatientId(e.target.value)}
+                    className="w-full px-3 py-2 bg-slate-900 text-white rounded-xl border border-blue-500 font-semibold focus:outline-rose-500 cursor-pointer text-xs"
+                  >
+                    {authorizedPatients.map(p => (
+                      <option key={p.id} value={p.id}>
+                        {p.fullName} ({p.age} Yrs, {p.village}) — Tel: {p.phone}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="bg-rose-950/80 border border-rose-500/50 p-3 rounded-xl space-y-1">
+                  <div className="font-bold text-rose-300 text-xs">GPS Location Lock:</div>
+                  <div className="text-slate-300 font-mono text-[11px]">Morgaon Village Ward 4 (GPS: 18.2325° N, 74.3168° E)</div>
+                  <div className="text-emerald-400 text-[11px]">Dispatched by ASHA: {ashaName}</div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    onClick={() => setAshaSosModalOpen(false)}
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-semibold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleAshaTriggerSOS}
+                    className="px-5 py-2 bg-rose-600 hover:bg-rose-500 text-white font-extrabold rounded-xl shadow-lg animate-bounce flex items-center gap-1.5"
+                  >
+                    <AlertTriangle className="w-4 h-4" /> Trigger Emergency SOS
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4 text-xs">
+                <div className="bg-emerald-950 border border-emerald-500 p-4 rounded-xl text-emerald-200 space-y-2">
+                  <div className="font-extrabold text-sm text-emerald-300 flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                    EMERGENCY DISPATCH CONFIRMED!
+                  </div>
+                  <div><strong>Alert Ref:</strong> {ashaSosDispatchData.alertId}</div>
+                  <div><strong>Patient:</strong> {ashaSosDispatchData.patientName}</div>
+                  <div><strong>Location Tracked:</strong> {ashaSosDispatchData.location}</div>
+                  <div className="pt-2 border-t border-emerald-800 text-[11px] text-emerald-300 space-y-1">
+                    <div>✅ 108 Ambulance Alerted with GPS coordinates</div>
+                    <div>✅ Automated Voice Call dispatched to Guardian ({ashaSosDispatchData.guardianPhone})</div>
+                    <div>✅ Emergency Notification broadcast to treating PHC Morgaon</div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    onClick={() => setAshaSosModalOpen(false)}
+                    className="px-5 py-2 bg-emerald-700 hover:bg-emerald-600 text-white font-bold rounded-xl"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

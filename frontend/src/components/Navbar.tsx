@@ -121,10 +121,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Mapped Standards Badges */}
+        {/* Clean Official Ministry Header Accent */}
         <div className="hidden lg:flex items-center gap-2">
-          <AbhaBadge />
-          <UWinBadge />
+          <span className="px-2.5 py-1 rounded bg-blue-900/80 text-amber-300 border border-amber-500/40 text-[11px] font-bold">
+            Public Health Department
+          </span>
         </div>
 
         {/* Right Utility Controls (Language & Rural Offline simulator) */}

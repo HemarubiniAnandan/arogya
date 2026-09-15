@@ -177,11 +177,7 @@ export default function App() {
           </div>
 
           <div className="hidden sm:flex items-center gap-3 text-slate-600 text-[11px] font-medium">
-            <span>ABHA/ABDM Compliant</span>
-            <span>•</span>
-            <span>U-WIN Universal Immunization</span>
-            <span>•</span>
-            <span>eSanjeevani Teleconsultation 2.0</span>
+            <span className="font-semibold text-[#0A2540]">Government Health Directorate Services</span>
           </div>
         </div>
       </div>

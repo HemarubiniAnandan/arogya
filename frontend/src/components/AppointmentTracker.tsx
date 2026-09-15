@@ -184,34 +184,41 @@ export const AppointmentTracker: React.FC<AppointmentTrackerProps> = ({ appointm
         </div>
       </div>
 
-      {/* Audit Log Detail for Clicked/Current Stage */}
-      <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-        <div className="flex items-center justify-between text-xs text-slate-600 mb-2">
-          <span className="font-bold uppercase tracking-wider flex items-center gap-1.5 text-slate-700">
-            <Info className="w-3.5 h-3.5 text-slate-500" />
-            Stage Verification & Timestamp Audit
+      {/* Expandable Accordion: Stage Verification & Timestamp Audit Log */}
+      <div className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+        <button
+          onClick={() => setSelectedLogIndex(selectedLogIndex === 1 ? null : 1)}
+          className="w-full flex items-center justify-between p-3.5 text-xs text-slate-700 font-bold hover:bg-slate-100 transition cursor-pointer"
+        >
+          <div className="flex items-center gap-2">
+            <Info className="w-4 h-4 text-emerald-600" />
+            <span>Stage Verification & Timestamp Audit History ({appointment.statusHistory.length} Verified Logs)</span>
+          </div>
+          <span className="text-slate-500 font-mono text-[11px] flex items-center gap-1">
+            {selectedLogIndex === 1 ? 'Collapse ▲' : 'Expand Timeline ▼'}
           </span>
-          <span className="text-[11px] text-slate-400 font-mono">Verified via State Health ID</span>
-        </div>
+        </button>
 
-        <div className="space-y-2">
-          {appointment.statusHistory.map((h, i) => (
-            <div
-              key={i}
-              className="text-xs flex flex-col sm:flex-row justify-between sm:items-center bg-white p-2.5 rounded-lg border border-slate-200/80 hover:border-slate-300 transition"
-            >
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
-                <span className="font-semibold text-slate-800">{h.stage}</span>
-                <span className="text-slate-400">•</span>
-                <span className="text-slate-600">{h.notes || 'Status confirmed'}</span>
+        {selectedLogIndex === 1 && (
+          <div className="p-4 pt-0 space-y-2 border-t border-slate-200/80 animate-in fade-in">
+            {appointment.statusHistory.map((h, i) => (
+              <div
+                key={i}
+                className="text-xs flex flex-col sm:flex-row justify-between sm:items-center bg-white p-2.5 rounded-lg border border-slate-200/80 hover:border-slate-300 transition"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                  <span className="font-semibold text-slate-800">{h.stage}</span>
+                  <span className="text-slate-400">•</span>
+                  <span className="text-slate-600">{h.notes || 'Status confirmed'}</span>
+                </div>
+                <div className="text-slate-500 mt-1 sm:mt-0 font-mono text-[11px]">
+                  by <span className="font-medium text-slate-700">{h.updatedBy}</span> ({h.role}) @ {h.timestamp}
+                </div>
               </div>
-              <div className="text-slate-500 mt-1 sm:mt-0 font-mono text-[11px]">
-                by <span className="font-medium text-slate-700">{h.updatedBy}</span> ({h.role}) @ {h.timestamp}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

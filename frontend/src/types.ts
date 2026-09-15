@@ -172,7 +172,7 @@ export interface Doctor {
   experienceYears: number;
   availableDays: string[];
   slots: string[];
-  status: 'Available' | 'On Leave' | 'Emergency Duty';
+  status: 'Available' | 'On Leave' | 'Emergency Duty' | 'Busy';
 }
 
 export interface VaccinationBooking {
@@ -313,4 +313,37 @@ export interface VoiceMessage {
   language: LanguageCode;
   text: string;
   status: 'Delivered' | 'Queued';
+}
+
+export interface DoctorSlotRoster {
+  id: string;
+  doctorId: string;
+  doctorName: string;
+  specialty: string;
+  hospitalId: string;
+  hospitalName: string;
+  date: string;
+  timeSlot: string;
+  maxCapacity: number;
+  bookedCount: number;
+  status: 'AVAILABLE' | 'FROZEN' | 'FULL';
+  frozenByPatientId?: string;
+  frozenAtTimestamp?: string;
+  releasedNotificationSent?: boolean;
+}
+
+export interface SlotFreezeRecord {
+  slotKey: string; // doctorId_date_timeSlot
+  frozenByPatientId: string;
+  patientName: string;
+  patientPhone: string;
+  timestamp: string; // ISO string
+  expiryTimestamp: string;
+  status: 'FROZEN' | 'RELEASED' | 'CONFIRMED';
+  waitingQueue?: {
+    patientId: string;
+    patientName: string;
+    patientPhone: string;
+    requestTimestamp: string;
+  }[];
 }
