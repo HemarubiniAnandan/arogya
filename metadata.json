@@ -1,0 +1,6 @@
+{
+  "name": "MahaAarogya Rural Health Continuity Platform",
+  "description": "Integrated rural healthcare access, continuity, referral, appointment, vaccination, and health-record management system for underserved communities in Maharashtra (SIH26133).",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
