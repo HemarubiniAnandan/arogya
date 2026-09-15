@@ -101,31 +101,11 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Main Official Header Bar */}
       <div className="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
         {/* Brand Header with AarogyaRakshak Emblem Logo */}
-        <div className="flex items-center gap-3.5">
-          <AarogyaRakshakLogo className="w-11 h-11 shrink-0 shadow-sm border border-slate-700" />
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white">
-                {language === 'mr' ? 'आरोग्यरक्षक' : language === 'hi' ? 'आरोग्यरक्षक' : 'AarogyaRakshak'}
-                <span className="text-slate-300 font-sans text-xs font-bold uppercase ml-2 px-2 py-0.5 rounded bg-slate-800 border border-slate-700">
-                  {language === 'mr' ? 'ग्रामीण आरोग्य व्यासपीठ' : language === 'hi' ? 'ग्रामीण स्वास्थ्य मंच' : 'Rural Health Portal'}
-                </span>
-              </h1>
-              <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700 rounded tracking-wider uppercase hidden sm:inline-block">
-                {language === 'mr' ? 'महाराष्ट्र शासन' : language === 'hi' ? 'महाराष्ट्र सरकार' : 'GOVT OF MAHARASHTRA'}
-              </span>
-            </div>
-            <p className="text-xs text-slate-400 font-medium mt-0.5">
-              Healthy Villages, Stronger Maharashtra • {language === 'mr' ? 'एक रुग्ण, एक अखंड आरोग्य प्रवास' : language === 'hi' ? 'एक मरीज़, एक जुड़ा हुआ स्वास्थ्य सफर' : 'One Patient, One Connected Health Journey'}
-            </p>
-          </div>
-        </div>
-
-        {/* Clean Official Ministry Header Accent */}
-        <div className="hidden lg:flex items-center gap-2">
-          <span className="px-2.5 py-1 rounded bg-slate-800 text-slate-200 border border-slate-700 text-[11px] font-bold">
-            Public Health Department
-          </span>
+        <div className="flex items-center gap-3">
+          <AarogyaRakshakLogo className="w-10 h-10 shrink-0 shadow-sm border border-slate-700" />
+          <h1 className="text-xl font-bold tracking-tight text-white">
+            {language === 'mr' ? 'आरोग्यरक्षक' : language === 'hi' ? 'आरोग्यरक्षक' : 'AarogyaRakshak'}
+          </h1>
         </div>
 
         {/* Right Utility Controls (Language & Rural Offline simulator) */}

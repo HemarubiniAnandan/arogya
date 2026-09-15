@@ -382,62 +382,65 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
   return (
     <div className="space-y-6">
       {/* Patient Switcher & Header Profile Card */}
-      <div className="bg-white rounded-xl border border-slate-300 shadow-sm overflow-hidden">
-        <div className="bg-gradient-to-r from-[#07172F] to-[#0F3460] text-white p-5 border-b border-amber-500/40">
+      <div className="bg-[#0F172A] text-white rounded-xl border border-slate-800 shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-slate-800">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div className="flex items-center gap-3.5">
-              <div className="w-13 h-13 rounded-xl bg-amber-500 text-[#07172F] flex items-center justify-center font-black text-xl shadow-md border-2 border-amber-300">
+              <div className="w-11 h-11 rounded-lg bg-slate-800 text-slate-200 border border-slate-700 flex items-center justify-center font-bold text-lg shrink-0">
                 {currentPatient?.fullName.charAt(0)}
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold text-white font-serif">{currentPatient?.fullName}</h2>
-                  <span className="px-2.5 py-0.5 rounded font-mono text-xs font-bold bg-blue-900/90 text-amber-300 border border-amber-400/40">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-lg font-bold text-white">{currentPatient?.fullName}</h2>
+                  <span className="px-2 py-0.5 rounded font-mono text-[11px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
                     {currentPatient?.id}
                   </span>
                   {currentPatient?.isHighRisk && (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-rose-600 text-white shadow-xs">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-rose-950 text-rose-200 border border-rose-800">
                       High Risk ({currentPatient.highRiskCategory})
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-slate-200 mt-1 flex flex-wrap items-center gap-3 font-medium">
+                <div className="text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-2.5 font-medium">
                   <span>{currentPatient?.age} Yrs • {currentPatient?.gender}</span>
                   <span>•</span>
-                  <span className="font-mono text-amber-300">ABHA ID: {currentPatient?.abhaId}</span>
+                  <span className="font-mono text-slate-300">ABHA: {currentPatient?.abhaId}</span>
                   <span>•</span>
                   <span>{currentPatient?.village}, Dist. {currentPatient?.district}</span>
                 </div>
               </div>
             </div>
 
-            {/* Patient Profile Selector & Add Patient */}
-            <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
-              <label className="text-xs text-slate-300 font-medium">Switch Citizen:</label>
-              <select
-                value={selectedPatientId}
-                onChange={e => setSelectedPatientId(e.target.value)}
-                className="px-3 py-1.5 text-xs rounded border border-blue-400/50 bg-[#07172F] text-white font-semibold focus:outline-amber-400 cursor-pointer"
-              >
-                {patients.map(p => (
-                  <option key={p.id} value={p.id} className="bg-[#07172F] text-white">
-                    {p.fullName} ({p.village}) - {p.id}
-                  </option>
-                ))}
-              </select>
-              <button
-                onClick={handleTriggerSOS}
-                className="px-4 py-1.5 bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs rounded-xl flex items-center gap-1.5 transition shadow-md animate-pulse border border-rose-300 cursor-pointer"
-                title="Trigger Immediate Emergency 108 Ambulance & Guardian Voice Call Alert"
-              >
-                <AlertTriangle className="w-4 h-4 text-white" />
-                EMERGENCY SOS
-              </button>
+            {/* Patient Profile Selector & Quick Actions */}
+            <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs text-slate-400 font-medium">Switch:</span>
+                <select
+                  value={selectedPatientId}
+                  onChange={e => setSelectedPatientId(e.target.value)}
+                  className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-700 bg-slate-800 text-white font-medium focus:outline-none cursor-pointer"
+                >
+                  {patients.map(p => (
+                    <option key={p.id} value={p.id} className="bg-[#0F172A] text-white">
+                      {p.fullName} ({p.village})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <button
                 onClick={onOpenRegistration}
-                className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-slate-950 rounded text-xs font-bold flex items-center gap-1 transition shadow-sm"
+                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold border border-slate-700 flex items-center gap-1.5 transition cursor-pointer"
               >
-                <PlusCircle className="w-3.5 h-3.5" /> New ABHA Registration
+                <PlusCircle className="w-3.5 h-3.5 text-slate-400" /> New ABHA
+              </button>
+
+              <button
+                onClick={handleTriggerSOS}
+                className="px-3 py-1.5 bg-rose-900/90 hover:bg-rose-900 text-rose-100 font-bold text-xs rounded-lg flex items-center gap-1.5 border border-rose-700/80 transition cursor-pointer"
+                title="Trigger Immediate Emergency 108 Ambulance & Guardian Voice Call Alert"
+              >
+                <AlertTriangle className="w-3.5 h-3.5 text-rose-400" /> SOS 108
               </button>
             </div>
           </div>
@@ -506,59 +509,59 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
       </div>
 
       {/* Nav Tabs styled as Govt Portal Tabs */}
-      <div className="flex border-b-2 border-[#0A2540] bg-[#07172F] rounded-t-xl p-1 shadow-sm overflow-x-auto text-xs font-bold">
+      <div className="flex bg-[#0F172A] border border-slate-800 rounded-xl p-1 shadow-2xs overflow-x-auto text-xs font-bold gap-1 scrollbar-none">
         <button
           onClick={() => setActiveTab('dashboard')}
-          className={`px-4 py-2.5 rounded transition shrink-0 ${
-            activeTab === 'dashboard' ? 'bg-blue-600 text-white shadow-sm border-b-2 border-amber-400' : 'text-slate-300 hover:text-white hover:bg-blue-900/50'
+          className={`px-4 py-2 rounded-lg transition shrink-0 cursor-pointer ${
+            activeTab === 'dashboard' ? 'bg-slate-800 text-white shadow-2xs border-b-2 border-slate-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
           }`}
         >
           Active Appointments & Timeline
         </button>
         <button
           onClick={() => { setActiveTab('book'); setBookingStep(1); }}
-          className={`px-4 py-2.5 rounded transition shrink-0 ${
-            activeTab === 'book' ? 'bg-blue-600 text-white shadow-sm border-b-2 border-amber-400' : 'text-slate-300 hover:text-white hover:bg-blue-900/50'
+          className={`px-4 py-2 rounded-lg transition shrink-0 cursor-pointer ${
+            activeTab === 'book' ? 'bg-slate-800 text-white shadow-2xs border-b-2 border-slate-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
           }`}
         >
           Book Appointment (e-Sanjeevani Triage)
         </button>
         <button
           onClick={() => setActiveTab('vaccination')}
-          className={`px-4 py-2.5 rounded transition shrink-0 ${
-            activeTab === 'vaccination' ? 'bg-blue-600 text-white shadow-sm border-b-2 border-amber-400' : 'text-slate-300 hover:text-white hover:bg-blue-900/50'
+          className={`px-4 py-2 rounded-lg transition shrink-0 cursor-pointer ${
+            activeTab === 'vaccination' ? 'bg-slate-800 text-white shadow-2xs border-b-2 border-slate-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
           }`}
         >
           Book Vaccination (U-WIN Portal)
         </button>
         <button
           onClick={() => setActiveTab('prescriptions')}
-          className={`px-4 py-2.5 rounded transition shrink-0 ${
-            activeTab === 'prescriptions' ? 'bg-blue-600 text-white shadow-sm border-b-2 border-amber-400' : 'text-slate-300 hover:text-white hover:bg-blue-900/50'
+          className={`px-4 py-2 rounded-lg transition shrink-0 cursor-pointer ${
+            activeTab === 'prescriptions' ? 'bg-slate-800 text-white shadow-2xs border-b-2 border-slate-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
           }`}
         >
           Prescriptions ({patientAppointments.filter(a => a.prescription).length})
         </button>
         <button
           onClick={() => setActiveTab('records')}
-          className={`px-4 py-2.5 rounded transition shrink-0 ${
-            activeTab === 'records' ? 'bg-blue-600 text-white shadow-sm border-b-2 border-amber-400' : 'text-slate-300 hover:text-white hover:bg-blue-900/50'
+          className={`px-4 py-2 rounded-lg transition shrink-0 cursor-pointer ${
+            activeTab === 'records' ? 'bg-slate-800 text-white shadow-2xs border-b-2 border-slate-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
           }`}
         >
           Longitudinal Health Records (ABHA)
         </button>
         <button
           onClick={() => setActiveTab('profile')}
-          className={`px-4 py-2.5 rounded transition shrink-0 ${
-            activeTab === 'profile' ? 'bg-blue-600 text-white shadow-sm border-b-2 border-amber-400' : 'text-slate-300 hover:text-white hover:bg-blue-900/50'
+          className={`px-4 py-2 rounded-lg transition shrink-0 cursor-pointer ${
+            activeTab === 'profile' ? 'bg-slate-800 text-white shadow-2xs border-b-2 border-slate-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
           }`}
         >
           My ABHA Health Profile (View & Edit)
         </button>
         <button
           onClick={() => setActiveTab('teleconsult')}
-          className={`px-4 py-2.5 rounded transition shrink-0 ${
-            activeTab === 'teleconsult' ? 'bg-blue-600 text-white shadow-sm border-b-2 border-amber-400' : 'text-slate-300 hover:text-white hover:bg-blue-900/50'
+          className={`px-4 py-2 rounded-lg transition shrink-0 cursor-pointer ${
+            activeTab === 'teleconsult' ? 'bg-slate-800 text-white shadow-2xs border-b-2 border-slate-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
           }`}
         >
           eSanjeevani Teleconsult Desk
