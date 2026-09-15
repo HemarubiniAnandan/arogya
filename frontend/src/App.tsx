@@ -144,22 +144,22 @@ export default function App() {
       )}
 
       {/* Official Services Toolbar Bar */}
-      <div className="bg-[#1E293B] border-b border-slate-700/80 py-2.5 px-4 shadow-2xs">
+      <div className="bg-slate-50 border-b border-slate-200 py-2 px-4 shadow-2xs">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-300 uppercase tracking-wider text-[11px] flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-slate-400" />
+            <span className="font-bold text-slate-700 uppercase tracking-wider text-[11px] flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-slate-500" />
               Integrated Portals:
             </span>
             <button
               onClick={() => setSpecialModule(specialModule === 'medicine' ? 'none' : 'medicine')}
               className={`px-3 py-1 rounded-lg font-bold text-xs flex items-center gap-1.5 transition border cursor-pointer ${
                 specialModule === 'medicine'
-                  ? 'bg-[#0F172A] text-white border-slate-600 shadow-xs'
-                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+                  ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                  : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
               }`}
             >
-              <Pill className="w-3.5 h-3.5 text-slate-400" />
+              <Pill className="w-3.5 h-3.5 text-slate-500" />
               e-Aushadhi Drug Inventory
             </button>
 
@@ -167,17 +167,17 @@ export default function App() {
               onClick={() => setSpecialModule(specialModule === 'diagnostics' ? 'none' : 'diagnostics')}
               className={`px-3 py-1 rounded-lg font-bold text-xs flex items-center gap-1.5 transition border cursor-pointer ${
                 specialModule === 'diagnostics'
-                  ? 'bg-[#0F172A] text-white border-slate-600 shadow-xs'
-                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+                  ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                  : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
               }`}
             >
-              <Microscope className="w-3.5 h-3.5 text-slate-400" />
+              <Microscope className="w-3.5 h-3.5 text-slate-500" />
               NABL Diagnostic Coordination
             </button>
           </div>
 
-          <div className="hidden sm:flex items-center gap-3 text-slate-400 text-[11px] font-medium">
-            <span className="font-semibold text-slate-300">Government Health Directorate Services</span>
+          <div className="hidden sm:flex items-center gap-3 text-slate-500 text-[11px] font-medium">
+            <span className="font-semibold text-slate-700">Government Health Directorate Services</span>
           </div>
         </div>
       </div>
@@ -249,36 +249,33 @@ export default function App() {
       </main>
 
       {/* Official Government Footer */}
-      <footer className="bg-[#0F172A] text-slate-400 text-xs py-8 border-t border-slate-800 mt-auto">
+      <footer className="bg-white text-slate-600 text-xs py-8 border-t border-slate-200 mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 space-y-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-slate-800">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-slate-200">
             <div className="flex items-center gap-3.5">
-              <AarogyaRakshakLogo className="w-11 h-11 shrink-0 border border-slate-700" />
+              <AarogyaRakshakLogo className="w-10 h-10 shrink-0 border border-slate-200 rounded-lg" />
               <MohfwLogo className="h-8 shrink-0 hidden sm:block" />
               <div>
-                <h2 className="text-base font-bold text-white">
+                <h2 className="text-base font-bold text-slate-900">
                   {language === 'mr' ? 'सार्वजनिक आरोग्य आणि कुटुंब कल्याण मंत्रालय' : language === 'hi' ? 'स्वास्थ्य एवं परिवार कल्याण मंत्रालय' : 'Ministry of Health and Family Welfare'} • {language === 'mr' ? 'महाराष्ट्र शासन' : language === 'hi' ? 'महाराष्ट्र सरकार' : 'Govt of Maharashtra'}
                 </h2>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   {language === 'mr' ? 'आरोग्यरक्षक - ग्रामीण आरोग्य निरंतरता प्रणाली' : language === 'hi' ? 'आरोग्यरक्षक - ग्रामीण स्वास्थ्य निरंतरता मंच' : 'AarogyaRakshak - Rural Health Continuity Platform'}
-                </p>
-                <p className="text-[11px] text-slate-300 font-semibold mt-0.5">
-                  Healthy Villages, Stronger Maharashtra
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-400">
-              <span className="flex items-center gap-1 hover:text-white cursor-pointer">
-                <Info className="w-3.5 h-3.5 text-slate-400" /> Terms of Service
+            <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-600">
+              <span className="flex items-center gap-1 hover:text-slate-900 cursor-pointer">
+                <Info className="w-3.5 h-3.5 text-slate-500" /> Terms of Service
               </span>
               <span>•</span>
-              <span className="flex items-center gap-1 hover:text-white cursor-pointer">
-                <ShieldCheck className="w-3.5 h-3.5 text-slate-400" /> Privacy Policy (ABDM Data Privacy)
+              <span className="flex items-center gap-1 hover:text-slate-900 cursor-pointer">
+                <ShieldCheck className="w-3.5 h-3.5 text-slate-500" /> Privacy Policy (ABDM Data Privacy)
               </span>
               <span>•</span>
-              <span className="flex items-center gap-1 hover:text-white cursor-pointer">
-                <PhoneCall className="w-3.5 h-3.5 text-slate-400" /> Toll Free: 104 / 1800-233-0244
+              <span className="flex items-center gap-1 hover:text-slate-900 cursor-pointer">
+                <PhoneCall className="w-3.5 h-3.5 text-slate-500" /> Toll Free: 104 / 1800-233-0244
               </span>
             </div>
           </div>

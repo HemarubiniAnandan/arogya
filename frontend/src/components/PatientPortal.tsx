@@ -382,29 +382,29 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
   return (
     <div className="space-y-6">
       {/* Patient Switcher & Header Profile Card */}
-      <div className="bg-[#0F172A] text-white rounded-xl border border-slate-800 shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-slate-800">
+      <div className="bg-white text-slate-900 rounded-xl border border-slate-200 shadow-2xs overflow-hidden">
+        <div className="p-5 border-b border-slate-200 bg-white">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-lg bg-slate-800 text-slate-200 border border-slate-700 flex items-center justify-center font-bold text-lg shrink-0">
+              <div className="w-11 h-11 rounded-lg bg-slate-100 text-slate-800 border border-slate-200 flex items-center justify-center font-bold text-lg shrink-0">
                 {currentPatient?.fullName.charAt(0)}
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-lg font-bold text-white">{currentPatient?.fullName}</h2>
-                  <span className="px-2 py-0.5 rounded font-mono text-[11px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+                  <h2 className="text-lg font-bold text-slate-900">{currentPatient?.fullName}</h2>
+                  <span className="px-2 py-0.5 rounded font-mono text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">
                     {currentPatient?.id}
                   </span>
                   {currentPatient?.isHighRisk && (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-rose-950 text-rose-200 border border-rose-800">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-rose-50 text-rose-700 border border-rose-200">
                       High Risk ({currentPatient.highRiskCategory})
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-2.5 font-medium">
+                <div className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-2.5 font-medium">
                   <span>{currentPatient?.age} Yrs • {currentPatient?.gender}</span>
                   <span>•</span>
-                  <span className="font-mono text-slate-300">ABHA: {currentPatient?.abhaId}</span>
+                  <span className="font-mono text-slate-600">ABHA: {currentPatient?.abhaId}</span>
                   <span>•</span>
                   <span>{currentPatient?.village}, Dist. {currentPatient?.district}</span>
                 </div>
@@ -414,14 +414,14 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
             {/* Patient Profile Selector & Quick Actions */}
             <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs text-slate-400 font-medium">Switch:</span>
+                <span className="text-xs text-slate-500 font-medium">Switch:</span>
                 <select
                   value={selectedPatientId}
                   onChange={e => setSelectedPatientId(e.target.value)}
-                  className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-700 bg-slate-800 text-white font-medium focus:outline-none cursor-pointer"
+                  className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:outline-none cursor-pointer"
                 >
                   {patients.map(p => (
-                    <option key={p.id} value={p.id} className="bg-[#0F172A] text-white">
+                    <option key={p.id} value={p.id} className="bg-white text-slate-800">
                       {p.fullName} ({p.village})
                     </option>
                   ))}
@@ -430,17 +430,17 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
 
               <button
                 onClick={onOpenRegistration}
-                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold border border-slate-700 flex items-center gap-1.5 transition cursor-pointer"
+                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-semibold border border-slate-200 flex items-center gap-1.5 transition cursor-pointer"
               >
-                <PlusCircle className="w-3.5 h-3.5 text-slate-400" /> New ABHA
+                <PlusCircle className="w-3.5 h-3.5 text-slate-500" /> New ABHA
               </button>
 
               <button
                 onClick={handleTriggerSOS}
-                className="px-3 py-1.5 bg-rose-900/90 hover:bg-rose-900 text-rose-100 font-bold text-xs rounded-lg flex items-center gap-1.5 border border-rose-700/80 transition cursor-pointer"
+                className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-lg flex items-center gap-1.5 border border-rose-200 transition cursor-pointer"
                 title="Trigger Immediate Emergency 108 Ambulance & Guardian Voice Call Alert"
               >
-                <AlertTriangle className="w-3.5 h-3.5 text-rose-400" /> SOS 108
+                <AlertTriangle className="w-3.5 h-3.5 text-rose-600" /> SOS 108
               </button>
             </div>
           </div>
@@ -449,11 +449,11 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
         {/* Clinical Summary & Privacy Toggle */}
         <div className="p-4 bg-slate-50 border-t border-slate-200 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="text-xs space-y-1">
-            <span className="font-bold text-[#0A2540] uppercase tracking-wider text-[10px]">Chronic Medical Conditions:</span>
+            <span className="font-bold text-slate-700 uppercase tracking-wider text-[10px]">Chronic Medical Conditions:</span>
             <div className="flex flex-wrap gap-1 mt-1">
               {currentPatient?.chronicConditions.length ? (
                 currentPatient.chronicConditions.map((c, i) => (
-                  <span key={i} className="px-2 py-0.5 bg-amber-50 text-amber-900 border border-amber-300 rounded text-[11px] font-semibold">
+                  <span key={i} className="px-2 py-0.5 bg-white text-slate-800 border border-slate-200 rounded text-[11px] font-semibold">
                     {c}
                   </span>
                 ))
@@ -464,11 +464,11 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
           </div>
 
           <div className="text-xs space-y-1">
-            <span className="font-bold text-[#0A2540] uppercase tracking-wider text-[10px]">Documented Drug Allergies:</span>
+            <span className="font-bold text-slate-700 uppercase tracking-wider text-[10px]">Documented Drug Allergies:</span>
             <div className="flex flex-wrap gap-1 mt-1">
               {currentPatient?.allergies.length ? (
                 currentPatient.allergies.map((a, i) => (
-                  <span key={i} className="px-2 py-0.5 bg-rose-50 text-rose-800 border border-rose-300 rounded text-[11px] font-semibold">
+                  <span key={i} className="px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 rounded text-[11px] font-semibold">
                     {a}
                   </span>
                 ))
@@ -479,10 +479,10 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
           </div>
 
           {/* Privacy Toggle */}
-          <div className="bg-white p-3 rounded-lg border border-slate-300 flex items-center justify-between shadow-2xs">
+          <div className="bg-white p-3 rounded-lg border border-slate-200 flex items-center justify-between shadow-2xs">
             <div>
-              <div className="text-xs font-bold text-[#0A2540] flex items-center gap-1.5">
-                <Shield className="w-3.5 h-3.5 text-amber-600" />
+              <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <Shield className="w-3.5 h-3.5 text-slate-600" />
                 ASHA Field Worker Access
               </div>
               <div className="text-[11px] text-slate-500">
@@ -495,7 +495,7 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
             <button
               onClick={handleToggleAshaConsent}
               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                currentPatient?.consent.allowAshaAssistance ? 'bg-blue-800' : 'bg-slate-300'
+                currentPatient?.consent.allowAshaAssistance ? 'bg-slate-900' : 'bg-slate-300'
               }`}
             >
               <span
@@ -509,11 +509,11 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
       </div>
 
       {/* Nav Tabs styled as Govt Portal Tabs */}
-      <div className="flex bg-[#0F172A] border border-slate-800 rounded-xl p-1 shadow-2xs overflow-x-auto text-xs font-bold gap-1 scrollbar-none">
+      <div className="flex bg-slate-100/90 border border-slate-200 rounded-xl p-1 shadow-2xs overflow-x-auto text-xs font-bold gap-1 scrollbar-none">
         <button
           onClick={() => setActiveTab('dashboard')}
           className={`px-4 py-2 rounded-lg transition shrink-0 cursor-pointer ${
-            activeTab === 'dashboard' ? 'bg-slate-800 text-white shadow-2xs border-b-2 border-slate-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+            activeTab === 'dashboard' ? 'bg-white text-slate-900 shadow-2xs border border-slate-200' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
           }`}
         >
           Active Appointments & Timeline
@@ -521,7 +521,7 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
         <button
           onClick={() => { setActiveTab('book'); setBookingStep(1); }}
           className={`px-4 py-2 rounded-lg transition shrink-0 cursor-pointer ${
-            activeTab === 'book' ? 'bg-slate-800 text-white shadow-2xs border-b-2 border-slate-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+            activeTab === 'book' ? 'bg-white text-slate-900 shadow-2xs border border-slate-200' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
           }`}
         >
           Book Appointment (e-Sanjeevani Triage)
@@ -529,7 +529,7 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
         <button
           onClick={() => setActiveTab('vaccination')}
           className={`px-4 py-2 rounded-lg transition shrink-0 cursor-pointer ${
-            activeTab === 'vaccination' ? 'bg-slate-800 text-white shadow-2xs border-b-2 border-slate-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+            activeTab === 'vaccination' ? 'bg-white text-slate-900 shadow-2xs border border-slate-200' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
           }`}
         >
           Book Vaccination (U-WIN Portal)
@@ -537,7 +537,7 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
         <button
           onClick={() => setActiveTab('prescriptions')}
           className={`px-4 py-2 rounded-lg transition shrink-0 cursor-pointer ${
-            activeTab === 'prescriptions' ? 'bg-slate-800 text-white shadow-2xs border-b-2 border-slate-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+            activeTab === 'prescriptions' ? 'bg-white text-slate-900 shadow-2xs border border-slate-200' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
           }`}
         >
           Prescriptions ({patientAppointments.filter(a => a.prescription).length})
@@ -545,7 +545,7 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
         <button
           onClick={() => setActiveTab('records')}
           className={`px-4 py-2 rounded-lg transition shrink-0 cursor-pointer ${
-            activeTab === 'records' ? 'bg-slate-800 text-white shadow-2xs border-b-2 border-slate-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+            activeTab === 'records' ? 'bg-white text-slate-900 shadow-2xs border border-slate-200' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
           }`}
         >
           Longitudinal Health Records (ABHA)
@@ -553,7 +553,7 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
         <button
           onClick={() => setActiveTab('profile')}
           className={`px-4 py-2 rounded-lg transition shrink-0 cursor-pointer ${
-            activeTab === 'profile' ? 'bg-slate-800 text-white shadow-2xs border-b-2 border-slate-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+            activeTab === 'profile' ? 'bg-white text-slate-900 shadow-2xs border border-slate-200' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
           }`}
         >
           My ABHA Health Profile (View & Edit)
@@ -561,7 +561,7 @@ export const PatientPortal: React.FC<PatientPortalProps> = ({
         <button
           onClick={() => setActiveTab('teleconsult')}
           className={`px-4 py-2 rounded-lg transition shrink-0 cursor-pointer ${
-            activeTab === 'teleconsult' ? 'bg-slate-800 text-white shadow-2xs border-b-2 border-slate-400' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+            activeTab === 'teleconsult' ? 'bg-white text-slate-900 shadow-2xs border border-slate-200' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
           }`}
         >
           eSanjeevani Teleconsult Desk
