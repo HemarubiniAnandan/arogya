@@ -25,9 +25,9 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 initDatabase().then(() => {
   app.listen(PORT, () => {
     console.log(`===================================================`);
-    console.log(`🚀 AarogyaRakshak 2.0 Backend Server Running!`);
-    console.log(`📡 URL: http://localhost:${PORT}`);
-    console.log(`💾 DB Engine: SQLite (database.sqlite)`);
+    console.log(`AarogyaRakshak 2.0 Backend Server Running!`);
+    console.log(`URL: http://localhost:${PORT}`);
+    console.log(`DB Engine: SQLite (database.sqlite)`);
     console.log(`===================================================`);
   });
 }).catch((err) => {

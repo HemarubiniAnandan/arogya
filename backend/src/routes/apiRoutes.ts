@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getPatients, getPatientById, verifyOtp } from '../controllers/patientController.js';
+import { getPatients, getPatientById, verifyOtp, updatePatient } from '../controllers/patientController.js';
 import { getAppointments, createAppointment, updateAppointmentStatus, completeConsultation } from '../controllers/appointmentController.js';
 import { getReferrals, createReferral, updateReferralStatus } from '../controllers/referralController.js';
 import { getHospitals, updateBeds } from '../controllers/hospitalController.js';
@@ -16,6 +16,7 @@ router.get('/health', (req, res) => {
 // Patients
 router.get('/patients', getPatients);
 router.get('/patients/:id', getPatientById);
+router.patch('/patients/:id', updatePatient);
 router.post('/patients/verify-otp', verifyOtp);
 
 // Appointments

@@ -72,7 +72,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ language }) => {
     occupancyRate: Math.round(((h.totalBeds - h.availableBeds) / h.totalBeds) * 100),
     availableBeds: h.availableBeds,
     totalBeds: h.totalBeds,
-    icuBeds: h.icuBeds
+    icuBeds: h.icuBedsAvailable
   }));
 
   return (
@@ -293,7 +293,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ language }) => {
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-slate-200 text-slate-600">
-                    <div>ICU Beds Free: <strong>{h.icuBeds}</strong></div>
+                    <div>ICU Beds Free: <strong>{h.icuBedsAvailable}</strong></div>
                     <div>Oxygen Plant: <strong>Operational</strong></div>
                   </div>
                 </div>

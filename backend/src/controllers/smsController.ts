@@ -13,12 +13,16 @@ export const getSmsLogs = async (req: Request, res: Response) => {
 export const dispatchSms = async (req: Request, res: Response) => {
   try {
     const { recipientPhone, recipientName, role, message, category } = req.body;
-    const id = `SMS-${Math.floor(100 + Math.random() * 900)}`;
+    if (!recipientPhone || !message) {
+      return res.status(400).json({ error: 'recipientPhone and message are required fields' });
+    }
+
+    const id = `SMS-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
     const timestamp = new Date().toISOString();
 
     await dbRun(
       `INSERT INTO sms_logs (id, timestamp, recipientPhone, recipientName, role, message, category, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, timestamp, recipientPhone, recipientName, role || 'patient', message, category || 'Emergency', 'Delivered']
+      [id, timestamp, recipientPhone, recipientName || 'Citizen', role || 'patient', message, category || 'Emergency', 'Delivered']
     );
 
     return res.status(201).json({ id, timestamp, recipientPhone, recipientName, role, message, category, status: 'Delivered' });

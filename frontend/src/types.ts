@@ -268,7 +268,7 @@ export interface DiagnosticTestItem {
   }[];
 }
 
-export interface MedicineItem {
+export interface PharmacyDrugItem {
   id: string;
   brandName: string;
   genericName: string;

@@ -13,7 +13,11 @@ export const getReferrals = async (req: Request, res: Response) => {
 export const createReferral = async (req: Request, res: Response) => {
   try {
     const data = req.body;
-    const id = data.id || `REF-MH-${Math.floor(7000 + Math.random() * 900)}`;
+    if (!data.patientId || !data.patientName) {
+      return res.status(400).json({ error: 'patientId and patientName are required fields' });
+    }
+
+    const id = data.id || `REF-MH-${Date.now().toString().slice(-6)}-${Math.floor(10 + Math.random() * 90)}`;
     const createdAt = new Date().toISOString();
     const qrCodeData = `MH-REF-${id}-QR-TOKEN`;
 

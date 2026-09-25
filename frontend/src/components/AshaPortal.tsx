@@ -688,9 +688,9 @@ export const AshaPortal: React.FC<AshaPortalProps> = ({ language, onOpenEmergenc
                   <div><strong>Patient:</strong> {ashaSosDispatchData.patientName}</div>
                   <div><strong>Location Tracked:</strong> {ashaSosDispatchData.location}</div>
                   <div className="pt-2 border-t border-emerald-800 text-[11px] text-emerald-300 space-y-1">
-                    <div>✅ 108 Ambulance Alerted with GPS coordinates</div>
-                    <div>✅ Automated Voice Call dispatched to Guardian ({ashaSosDispatchData.guardianPhone})</div>
-                    <div>✅ Emergency Notification broadcast to treating PHC Morgaon</div>
+                    <div>[CONFIRMED] 108 Ambulance Alerted with GPS coordinates</div>
+                    <div>[CONFIRMED] Automated Voice Call dispatched to Guardian ({ashaSosDispatchData.guardianPhone})</div>
+                    <div>[CONFIRMED] Emergency Notification broadcast to treating PHC Morgaon</div>
                   </div>
                 </div>
 

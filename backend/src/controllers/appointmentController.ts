@@ -20,26 +20,30 @@ export const getAppointments = async (req: Request, res: Response) => {
 export const createAppointment = async (req: Request, res: Response) => {
   try {
     const data = req.body;
-    const id = data.id || `APT-MH-${Math.floor(1000 + Math.random() * 9000)}`;
-    const tokenNumber = data.tokenNumber || `MH-TK-${Math.floor(100 + Math.random() * 900)}`;
+    if (!data.patientId || !data.patientName) {
+      return res.status(400).json({ error: 'patientId and patientName are required fields' });
+    }
+
+    const id = data.id || `APT-MH-${Date.now().toString().slice(-6)}-${Math.floor(10 + Math.random() * 90)}`;
+    const tokenNumber = data.tokenNumber || `MH-TK-${Math.floor(1000 + Math.random() * 9000)}`;
     const createdAt = new Date().toISOString();
-    const qrCodeData = `MH-TOKEN-${data.patientId || 'PT'}-${id}`;
+    const qrCodeData = `MH-TOKEN-${data.patientId}-${id}`;
 
     await dbRun(
       `INSERT INTO appointments (id, tokenNumber, patientId, patientName, patientAge, patientGender, patientPhone, hospitalId, hospitalName, hospitalType, department, doctorId, doctorName, date, timeSlot, chiefComplaint, suggestedDepartmentByNLP, isEmergencyAlert, assistedByAshaId, assistedByAshaName, status, statusHistory, queuePosition, estimatedWaitMins, qrCodeData, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         tokenNumber,
-        data.patientId || 'PT-MH-9021',
-        data.patientName || 'Citizen',
+        data.patientId,
+        data.patientName,
         data.patientAge || 30,
         data.patientGender || 'Male',
-        data.patientPhone || '+91 98220 12345',
+        data.patientPhone || '9822014589',
         data.hospitalId || 'HOSP-PHC-MOR',
         data.hospitalName || 'Primary Health Centre (PHC) Morgaon',
         data.hospitalType || 'PHC',
         data.department || 'General Medicine',
-        data.doctorId || 'DOC-MH-101',
+        data.doctorId || 'DOC-MH-01',
         data.doctorName || 'Dr. Aniruddha Kulkarni',
         data.date || new Date().toISOString().split('T')[0],
         data.timeSlot || '10:00 AM',

@@ -377,10 +377,10 @@ export const DoctorPortal: React.FC<DoctorPortalProps> = ({ language, onOpenSmsD
                       : 'bg-slate-800 text-slate-300 border-slate-600'
                   }`}
                 >
-                  <option value="Available">🟢 Available</option>
-                  <option value="Busy">🔴 Busy (Notify Staff)</option>
-                  <option value="Emergency Duty">⚡ Emergency Duty</option>
-                  <option value="On Leave">🟡 On Leave</option>
+                  <option value="Available">Available</option>
+                  <option value="Busy">Busy (Notify Staff)</option>
+                  <option value="Emergency Duty">Emergency Duty</option>
+                  <option value="On Leave">On Leave</option>
                 </select>
               </div>
             </div>

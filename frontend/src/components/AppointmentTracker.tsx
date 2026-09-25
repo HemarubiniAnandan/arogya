@@ -115,7 +115,7 @@ export const AppointmentTracker: React.FC<AppointmentTrackerProps> = ({ appointm
             </span>
             {appointment.status === 'CANCELLED' && (
               <div className="mt-1 text-xs text-rose-800 font-medium">
-                ✓ Hospital staff and Dr. {appointment.doctorName} were notified. OPD queue slot has been released.
+                [CONFIRMED] Hospital staff and Dr. {appointment.doctorName} were notified. OPD queue slot has been released.
               </div>
             )}
             {appointment.alternateSlotOffered && (

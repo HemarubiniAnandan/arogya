@@ -158,7 +158,7 @@ export const StaffPortal: React.FC<StaffPortalProps> = ({ language, onOpenSmsDra
   const cancelledCount = appointments.filter(a => a.status === 'CANCELLED').length;
 
   const patientCancelledAppointments = appointments.filter(
-    a => a.status === 'CANCELLED' && (a.cancellationReason?.toLowerCase().includes('patient') || a.statusHistory?.some(h => h.changedByRole === 'patient'))
+    a => a.status === 'CANCELLED' && (a.cancellationReason?.toLowerCase().includes('patient') || a.statusHistory?.some(h => h.role === 'patient'))
   );
 
   // Quick 1-click Confirm Booking
@@ -340,7 +340,7 @@ export const StaffPortal: React.FC<StaffPortalProps> = ({ language, onOpenSmsDra
                   : 'bg-rose-600 hover:bg-rose-500 text-white animate-pulse'
               }`}
             >
-              {currentHospital.emergencyStatus === 'Accepting' ? '🟢 ACCEPTING' : '🔴 TEMPORARILY UNAVAILABLE'}
+              {currentHospital.emergencyStatus === 'Accepting' ? 'ACCEPTING' : 'TEMPORARILY UNAVAILABLE'}
             </button>
           </div>
 
